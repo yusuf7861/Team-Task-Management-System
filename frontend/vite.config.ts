@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'https://teamtaskmanagerethara-fnhmeedjd7dfd0h4.westindia-01.azurewebsites.net/',
         changeOrigin: true,
         secure: false,
       },

@@ -168,9 +168,9 @@ const AdminDashboard: React.FC = () => {
           try {
             await subtasksApi.create(created.id!, {
               title: sd.title,
-              description: sd.description || null,
-              assignedToId: sd.assignedToId || null,
-              dueDate: sd.dueDate || null,
+              description: sd.description || undefined,
+              assignedToId: sd.assignedToId || undefined,
+              dueDate: sd.dueDate || undefined,
               status: 'TODO',
             });
           } catch (err) {
@@ -383,7 +383,7 @@ const AdminDashboard: React.FC = () => {
               </thead>
               <tbody className="font-body-sm text-body-sm divide-y divide-outline-variant">
                 {allTasks.slice(0, 6).flatMap((task) => {
-                  const rows: JSX.Element[] = [];
+                  const rows: any[] = [];
                   rows.push(
                     <tr key={task.id} className="hover:bg-surface-bright transition-colors group">
                       <td className="py-3 px-4">

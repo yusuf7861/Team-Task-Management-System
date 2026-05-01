@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { tasksApi, subtasksApi, type TaskDto, type SubtaskDto, type TaskStatus } from '../services/api';
+import { tasksApi, subtasksApi, type TaskDto, type TaskStatus } from '../services/api';
 
 const statusConfig: Record<TaskStatus, { label: string; bg: string; text: string; dot: string }> = {
   TODO: { label: 'To Do', bg: 'bg-surface-container', text: 'text-on-surface-variant', dot: 'bg-outline' },
@@ -15,7 +15,7 @@ const TaskDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [taskStatusError, setTaskStatusError] = useState('');
-  const [subtaskStatusError, setSubtaskStatusError] = useState('');
+
 
   useEffect(() => {
     const fetchTask = async () => {

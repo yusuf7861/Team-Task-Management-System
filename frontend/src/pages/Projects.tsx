@@ -96,7 +96,7 @@ const Projects: React.FC = () => {
 
   if (selectedProject) {
     const idx = projects.indexOf(selectedProject);
-    const color = projectColors[idx % projectColors.length];
+
     const progress = selectedProject.taskCount > 0
       ? Math.round((selectedProject.completedCount / selectedProject.taskCount) * 100)
       : 0;

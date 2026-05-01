@@ -88,9 +88,7 @@ const MemberDashboard: React.FC = () => {
   const overdueTasks = myTasks.filter(
     (t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE'
   );
-  const overdueSubtasks = mySubtasks.filter(
-    (t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE'
-  );
+
   const totalOverdueCount = (stats?.overdueTasks || 0);
 
   return (

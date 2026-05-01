@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -22,13 +22,16 @@ jobs:
           distribution: 'microsoft'
 
       - name: Build with Maven
+        # We move into the subfolder where pom.xml exists before running the build
         run: mvn clean install
+        working-directory: backend/taskmanager
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: '${{ github.workspace }}backend/taskmanager/target/*.war'
+          # The path must reflect where the WAR file is actually generated
+          path: 'backend/taskmanager/target/*.war'
 
   deploy:
     runs-on: ubuntu-latest
@@ -46,5 +49,6 @@ jobs:
         with:
           app-name: 'teamtaskmanagerethara'
           slot-name: 'Production'
+          # After downloading the artifact, the .war file will be in the root of the runner
           package: '*.war'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_94EE79DB3FC64DF6BFC480DD9F33BF3D }}

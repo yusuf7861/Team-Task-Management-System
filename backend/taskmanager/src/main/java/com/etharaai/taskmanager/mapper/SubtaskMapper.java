@@ -1,22 +1,22 @@
 package com.etharaai.taskmanager.mapper;
 
-import com.etharaai.taskmanager.dto.TaskDto;
-import com.etharaai.taskmanager.entity.Task;
+import com.etharaai.taskmanager.dto.SubtaskDto;
+import com.etharaai.taskmanager.entity.Subtask;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = SubtaskMapper.class)
-public interface TaskMapper {
+@Mapper(componentModel = "spring")
+public interface SubtaskMapper {
 
-    @Mapping(target = "projectId", source = "project.id")
-    @Mapping(target = "projectName", source = "project.name")
+    @Mapping(target = "taskId", source = "task.id")
     @Mapping(target = "assignedToId", source = "assignedTo.id")
     @Mapping(target = "assignedToName", source = "assignedTo.name")
     @Mapping(target = "createdById", source = "createdBy.id")
     @Mapping(target = "createdByName", source = "createdBy.name")
-    TaskDto toDto(Task task);
+    SubtaskDto toDto(Subtask subtask);
 
-    List<TaskDto> toDtoList(List<Task> tasks);
+    List<SubtaskDto> toDtoList(List<Subtask> subtasks);
 }
+

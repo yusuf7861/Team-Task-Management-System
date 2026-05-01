@@ -1,0 +1,81 @@
+# ======================
+# 🚀 Root / Project Wide
+# ======================
+.DS_Store
+Thumbs.db
+*.log
+logs/
+*.tmp
+*.swp
+*.swo
+.history/
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# ======================
+# 🚀 Backend - Spring Boot (Java)
+# ======================
+# Maven
+**/target/
+**/pom.xml.tag
+**/pom.xml.releaseBackup
+**/pom.xml.versionsBackup
+**/pom.xml.next
+**/release.properties
+**/dependency-reduced-pom.xml
+**/buildNumber.properties
+**/.mvn/timing.properties
+# Avoid ignoring mvnw wrapper properties if they exist
+!**/mvnw
+!**/.mvn/wrapper/maven-wrapper.properties
+
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+# ======================
+# 🌐 Frontend - Vite / React / Next.js
+# ======================
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/build/
+**/.next/
+**/out/
+**/.turbo/
+**/coverage/
+**/.vercel
+**/.env
+**/.env.*
+!**/.env.example
+**/.eslintcache
+**/*.local
+
+# ======================
+# ⚙️ Miscellaneous
+# ======================
+.env
+.env.local
+.env.*.local
+.npm
+.eslintcache
+node_modules/

@@ -3,6 +3,7 @@ package com.etharaai.taskmanager.controller;
 import com.etharaai.taskmanager.dto.TaskDto;
 import com.etharaai.taskmanager.entity.TaskStatus;
 import com.etharaai.taskmanager.service.TaskService;
+    import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,7 +20,7 @@ public class TaskController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<TaskDto> createTask(@RequestBody TaskDto taskDto) {
+    public ResponseEntity<TaskDto> createTask(@Valid @RequestBody TaskDto taskDto) {
         return ResponseEntity.ok(taskService.createTask(taskDto));
     }
 
@@ -27,6 +28,12 @@ public class TaskController {
     public ResponseEntity<List<TaskDto>> getTasksByProject(@PathVariable Long projectId) {
         return ResponseEntity.ok(taskService.getTasksByProjectId(projectId));
     }
+
+    @GetMapping("/{taskId}")
+    public ResponseEntity<TaskDto> getTaskWithSubtasks(@PathVariable Long taskId) {
+        return ResponseEntity.ok(taskService.getTaskWithSubtasks(taskId));
+    }
+
 
     @GetMapping("/my-tasks")
     public ResponseEntity<List<TaskDto>> getMyTasks() {
@@ -36,5 +43,11 @@ public class TaskController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<TaskDto> updateTaskStatus(@PathVariable Long id, @RequestParam TaskStatus status) {
         return ResponseEntity.ok(taskService.updateTaskStatus(id, status));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
+        taskService.deleteTask(id);
+        return ResponseEntity.noContent().build();
     }
 }

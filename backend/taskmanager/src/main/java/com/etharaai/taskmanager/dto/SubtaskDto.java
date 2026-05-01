@@ -1,18 +1,16 @@
 package com.etharaai.taskmanager.dto;
 
 import com.etharaai.taskmanager.entity.TaskStatus;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
-public record TaskDto(
+public record SubtaskDto(
     Long id,
 
-    @NotBlank(message = "Task title is required")
+    @NotBlank(message = "Subtask title is required")
     @Size(min = 1, max = 255, message = "Title must be between 1 and 255 characters")
     String title,
 
@@ -23,10 +21,8 @@ public record TaskDto(
 
     LocalDate dueDate,
 
-    @NotNull(message = "Project ID is required")
-    Long projectId,
-
-    String projectName,
+    @NotNull(message = "Task ID is required")
+    Long taskId,
 
     Long assignedToId,
 
@@ -36,8 +32,6 @@ public record TaskDto(
 
     String createdByName,
 
-    LocalDateTime createdAt,
-
-    @Valid
-    List<SubtaskDto> subtasks
+    LocalDateTime createdAt
 ) {}
+

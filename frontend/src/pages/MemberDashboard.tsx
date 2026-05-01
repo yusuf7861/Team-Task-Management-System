@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { dashboardApi, tasksApi, usersApi, type DashboardStats, type TaskDto, type TaskStatus, type UserDto } from '../services/api';
+import { dashboardApi, tasksApi, subtasksApi, usersApi, type DashboardStats, type TaskDto, type SubtaskDto, type TaskStatus, type UserDto } from '../services/api';
 
 
 
 const MemberDashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [myTasks, setMyTasks] = useState<TaskDto[]>([]);
+  const [mySubtasks, setMySubtasks] = useState<SubtaskDto[]>([]);
   const [teamMembers, setTeamMembers] = useState<UserDto[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,14 +15,28 @@ const MemberDashboard: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [statsRes, tasksRes, usersRes] = await Promise.all([
+      const [statsRes, tasksRes, subtasksRes, usersRes] = await Promise.allSettled([
         dashboardApi.getStats(),
         tasksApi.getMyTasks(),
+        subtasksApi.getMySubtasks(),
         usersApi.getAll(),
       ]);
-      setStats(statsRes.data);
-      setMyTasks(tasksRes.data);
-      setTeamMembers(usersRes.data);
+
+      if (statsRes.status === 'fulfilled') {
+        setStats(statsRes.value.data);
+      }
+
+      if (tasksRes.status === 'fulfilled') {
+        setMyTasks(tasksRes.value.data);
+      }
+
+      if (subtasksRes.status === 'fulfilled') {
+        setMySubtasks(subtasksRes.value.data);
+      }
+
+      if (usersRes.status === 'fulfilled') {
+        setTeamMembers(usersRes.value.data);
+      }
     } catch (err) {
       console.error('Failed to load dashboard', err);
     } finally {
@@ -66,10 +81,17 @@ const MemberDashboard: React.FC = () => {
   const todoTasks = myTasks.filter((t) => t.status === 'TODO');
   const inProgressTasks = myTasks.filter((t) => t.status === 'IN_PROGRESS');
   const doneTasks = myTasks.filter((t) => t.status === 'DONE');
+  const todoSubtasks = mySubtasks.filter((t) => t.status === 'TODO');
+  const inProgressSubtasks = mySubtasks.filter((t) => t.status === 'IN_PROGRESS');
+  const doneSubtasks = mySubtasks.filter((t) => t.status === 'DONE');
 
   const overdueTasks = myTasks.filter(
     (t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE'
   );
+  const overdueSubtasks = mySubtasks.filter(
+    (t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE'
+  );
+  const totalOverdueCount = (stats?.overdueTasks || 0);
 
   return (
     <>
@@ -108,13 +130,13 @@ const MemberDashboard: React.FC = () => {
         <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm flex flex-col gap-2">
           <div className="flex justify-between items-start">
             <span className="font-button text-button text-on-surface-variant">In Progress</span>
-            <div className="w-8 h-8 rounded bg-secondary-fixed text-secondary flex items-center justify-center">
-              <span className="material-symbols-outlined text-[18px]">pending</span>
-            </div>
+            <div className="w-8 h-8 rounded bg-secondary-container text-secondary flex items-center justify-center">
+            <span className="material-symbols-outlined text-[18px]">pending</span>
           </div>
-          <span className="font-h1 text-h1 text-on-background">{inProgressTasks.length}</span>
-          <span className="font-label-caps text-label-caps text-outline">Currently working on</span>
         </div>
+        <span className="font-h1 text-h1 text-on-background">{stats?.pendingTasks || 0}</span>
+        <span className="font-label-caps text-label-caps text-outline">Currently working on</span>
+      </div>
 
         <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm flex flex-col gap-2">
           <div className="flex justify-between items-start">
@@ -123,31 +145,33 @@ const MemberDashboard: React.FC = () => {
               <span className="material-symbols-outlined text-[18px]">check_circle</span>
             </div>
           </div>
-          <span className="font-h1 text-h1 text-on-background">{doneTasks.length}</span>
+          <span className="font-h1 text-h1 text-on-background">{stats?.completedTasks || 0}</span>
           <span className="font-label-caps text-label-caps text-outline">{completionRate}% done</span>
         </div>
 
-        <div className={`${overdueTasks.length > 0 ? 'bg-error-container border-error-container' : 'bg-surface-container-lowest border-outline-variant'} border rounded-lg p-md shadow-sm flex flex-col gap-2 relative overflow-hidden`}>
-          {overdueTasks.length > 0 && <div className="absolute top-0 right-0 w-24 h-24 bg-on-error-container opacity-5 rounded-full -mr-8 -mt-8"></div>}
+        <div className={`${(stats?.overdueTasks || 0) > 0 ? 'bg-error-container border-error-container' : 'bg-surface-container-lowest border-outline-variant'} border rounded-lg p-md shadow-sm flex flex-col gap-2 relative overflow-hidden`}>
+          {(stats?.overdueTasks || 0) > 0 && <div className="absolute top-0 right-0 w-24 h-24 bg-on-error-container opacity-5 rounded-full -mr-8 -mt-8"></div>}
           <div className="flex justify-between items-start relative z-10">
-            <span className={`font-button text-button ${overdueTasks.length > 0 ? 'text-on-error-container' : 'text-on-surface-variant'}`}>Overdue</span>
-            <div className={`w-8 h-8 rounded ${overdueTasks.length > 0 ? 'bg-surface-container-lowest text-error' : 'bg-surface-container text-outline'} flex items-center justify-center`}>
-              <span className="material-symbols-outlined text-[18px]">{overdueTasks.length > 0 ? 'warning' : 'done_all'}</span>
+            <span className={`font-button text-button ${(stats?.overdueTasks || 0) > 0 ? 'text-on-error-container' : 'text-on-surface-variant'}`}>Overdue</span>
+            <div className={`w-8 h-8 rounded ${(stats?.overdueTasks || 0) > 0 ? 'bg-surface-container-lowest text-error' : 'bg-surface-container text-outline'} flex items-center justify-center`}>
+              <span className="material-symbols-outlined text-[18px]">{(stats?.overdueTasks || 0) > 0 ? 'warning' : 'done_all'}</span>
             </div>
           </div>
-          <span className={`font-h1 text-h1 relative z-10 ${overdueTasks.length > 0 ? 'text-on-error-container' : 'text-on-background'}`}>{overdueTasks.length}</span>
-          <span className={`font-label-caps text-label-caps relative z-10 ${overdueTasks.length > 0 ? 'text-on-error-container opacity-80' : 'text-outline'}`}>
-            {overdueTasks.length > 0 ? 'Needs your attention!' : 'All caught up!'}
+          <span className={`font-h1 text-h1 relative z-10 ${(stats?.overdueTasks || 0) > 0 ? 'text-on-error-container' : 'text-on-background'}`}>{stats?.overdueTasks || 0}</span>
+          <span className={`font-label-caps text-label-caps relative z-10 ${(stats?.overdueTasks || 0) > 0 ? 'text-on-error-container opacity-80' : 'text-outline'}`}>
+            {(stats?.overdueTasks || 0) > 0 ? 'Needs your attention!' : 'All caught up!'}
           </span>
         </div>
       </div>
 
       {/* Overdue Alert */}
-      {overdueTasks.length > 0 && (
+      {totalOverdueCount > 0 && (
         <div className="bg-error-container border border-error-container rounded-xl p-md flex items-start gap-md">
-          <span className="material-symbols-outlined text-on-error-container text-[24px] mt-0.5">schedule</span>
+          <div className="w-10 h-10 rounded-full bg-surface-container-lowest text-error flex items-center justify-center flex-shrink-0">
+            <span className="material-symbols-outlined">priority_high</span>
+          </div>
           <div>
-            <h4 className="font-button text-button text-on-error-container mb-1">You have {overdueTasks.length} overdue task{overdueTasks.length > 1 ? 's' : ''}</h4>
+            <h4 className="font-button text-button text-on-error-container mb-1">You have {totalOverdueCount} overdue item{totalOverdueCount > 1 ? 's' : ''}</h4>
             <div className="flex flex-wrap gap-sm">
               {overdueTasks.map((task) => (
                 <Link key={task.id} to={`/app/tasks/${task.id}`} className="font-body-sm text-body-sm text-on-error-container underline hover:opacity-80">
@@ -281,6 +305,84 @@ const MemberDashboard: React.FC = () => {
                       +{doneTasks.length - 3} more completed
                     </p>
                   )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* My Subtasks */}
+      <section className="flex flex-col gap-md">
+        <div className="flex justify-between items-center border-b border-outline-variant pb-2">
+          <h3 className="font-h3 text-h3 text-on-background">My Subtasks</h3>
+          <span className="font-body-sm text-body-sm text-on-surface-variant">{mySubtasks.length} total</span>
+        </div>
+
+        {mySubtasks.length === 0 ? (
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-xl text-center">
+            <span className="material-symbols-outlined text-[48px] text-outline opacity-30 block mb-md">playlist_add_check</span>
+            <p className="font-body-md text-body-md text-on-surface-variant">No subtasks assigned to you yet.</p>
+            <p className="font-body-sm text-body-sm text-outline mt-sm">They will appear here when your tasks are broken down further.</p>
+          </div>
+        ) : (
+          <div className="space-y-sm">
+            {todoSubtasks.length > 0 && (
+              <div>
+                <h4 className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-sm flex items-center gap-xs">
+                  <div className="w-2 h-2 rounded-full bg-outline"></div>
+                  To Do ({todoSubtasks.length})
+                </h4>
+                <div className="space-y-1">
+                  {todoSubtasks.map((subtask) => (
+                    <Link key={subtask.id} to={`/app/tasks/${subtask.taskId}`} className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md flex items-start justify-between gap-md hover:shadow-sm transition-shadow group">
+                      <div className="min-w-0">
+                        <div className="font-button text-button text-on-background group-hover:text-primary transition-colors block truncate">{subtask.title}</div>
+                        <span className="font-label-caps text-label-caps text-outline block truncate">{subtask.description || 'No description'}</span>
+                      </div>
+                      <span className="font-label-caps text-label-caps text-outline flex-shrink-0">Task #{String(subtask.taskId).padStart(3, '0')}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {inProgressSubtasks.length > 0 && (
+              <div>
+                <h4 className="font-label-caps text-label-caps text-secondary uppercase tracking-wider mb-sm flex items-center gap-xs mt-md">
+                  <div className="w-2 h-2 rounded-full bg-secondary"></div>
+                  In Progress ({inProgressSubtasks.length})
+                </h4>
+                <div className="space-y-1">
+                  {inProgressSubtasks.map((subtask) => (
+                    <Link key={subtask.id} to={`/app/tasks/${subtask.taskId}`} className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md flex items-start justify-between gap-md hover:shadow-sm transition-shadow group">
+                      <div className="min-w-0">
+                        <div className="font-button text-button text-on-background group-hover:text-primary transition-colors block truncate">{subtask.title}</div>
+                        <span className="font-label-caps text-label-caps text-outline block truncate">{subtask.description || 'No description'}</span>
+                      </div>
+                      <span className="font-label-caps text-label-caps text-outline flex-shrink-0">Task #{String(subtask.taskId).padStart(3, '0')}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {doneSubtasks.length > 0 && (
+              <div>
+                <h4 className="font-label-caps text-label-caps text-tertiary uppercase tracking-wider mb-sm flex items-center gap-xs mt-md">
+                  <div className="w-2 h-2 rounded-full bg-tertiary"></div>
+                  Completed ({doneSubtasks.length})
+                </h4>
+                <div className="space-y-1">
+                  {doneSubtasks.map((subtask) => (
+                    <Link key={subtask.id} to={`/app/tasks/${subtask.taskId}`} className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md flex items-start justify-between gap-md hover:shadow-sm transition-shadow group opacity-90">
+                      <div className="min-w-0">
+                        <div className="font-button text-button text-on-background group-hover:text-primary transition-colors block truncate">{subtask.title}</div>
+                        <span className="font-label-caps text-label-caps text-outline block truncate">{subtask.description || 'No description'}</span>
+                      </div>
+                      <span className="font-label-caps text-label-caps text-outline flex-shrink-0">Task #{String(subtask.taskId).padStart(3, '0')}</span>
+                    </Link>
+                  ))}
                 </div>
               </div>
             )}

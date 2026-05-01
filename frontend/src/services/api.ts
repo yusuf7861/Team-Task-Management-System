@@ -89,6 +89,20 @@ export const projectsApi = {
 // ─── Tasks ───────────────────────────────────────────────
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
 
+export interface SubtaskDto {
+  id: number;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  dueDate: string | null;
+  taskId: number;
+  assignedToId: number | null;
+  assignedToName: string | null;
+  createdById: number | null;
+  createdByName: string | null;
+  createdAt: string | null;
+}
+
 export interface TaskDto {
   id: number | null;
   title: string;
@@ -102,14 +116,27 @@ export interface TaskDto {
   createdById: number | null;
   createdByName: string | null;
   createdAt: string | null;
+  subtasks?: SubtaskDto[];
 }
 
 export const tasksApi = {
   getByProject: (projectId: number) => api.get<TaskDto[]>(`/tasks/project/${projectId}`),
+  getById: (id: number) => api.get<TaskDto>(`/tasks/${id}`),
   getMyTasks: () => api.get<TaskDto[]>('/tasks/my-tasks'),
   create: (data: Partial<TaskDto>) => api.post<TaskDto>('/tasks', data),
   updateStatus: (id: number, status: TaskStatus) =>
     api.patch<TaskDto>(`/tasks/${id}/status`, null, { params: { status } }),
+};
+
+export const subtasksApi = {
+  getByTask: (taskId: number) => api.get<SubtaskDto[]>(`/subtasks/task/${taskId}`),
+  getByUser: (userId: number) => api.get<SubtaskDto[]>(`/subtasks/user/${userId}`),
+  getMySubtasks: () => api.get<SubtaskDto[]>('/subtasks/my-subtasks'),
+  getById: (id: number) => api.get<SubtaskDto>(`/subtasks/${id}`),
+  create: (taskId: number, data: Partial<SubtaskDto>) => api.post<SubtaskDto>(`/subtasks/task/${taskId}`, data),
+  updateStatus: (id: number, status: TaskStatus) =>
+    api.patch<SubtaskDto>(`/subtasks/${id}/status`, null, { params: { status } }),
+  delete: (id: number) => api.delete<void>(`/subtasks/${id}`),
 };
 
 // ─── Users (Team) ────────────────────────────────────────

@@ -15,8 +15,7 @@ const TaskDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [taskStatusError, setTaskStatusError] = useState('');
-
-
+  const [subtaskStatusError, setSubtaskStatusError] = useState('');
   useEffect(() => {
     const fetchTask = async () => {
       try {

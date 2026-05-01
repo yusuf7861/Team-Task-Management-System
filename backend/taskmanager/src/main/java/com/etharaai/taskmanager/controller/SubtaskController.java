@@ -3,6 +3,7 @@ package com.etharaai.taskmanager.controller;
 import com.etharaai.taskmanager.dto.SubtaskDto;
 import com.etharaai.taskmanager.entity.TaskStatus;
 import com.etharaai.taskmanager.service.SubtaskService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,7 @@ public class SubtaskController {
     private final SubtaskService subtaskService;
 
     @PostMapping("/task/{taskId}")
-    public ResponseEntity<SubtaskDto> createSubtask(@PathVariable Long taskId, @RequestBody SubtaskDto subtaskDto) {
+    public ResponseEntity<SubtaskDto> createSubtask(@PathVariable Long taskId, @Valid @RequestBody SubtaskDto subtaskDto) {
         return ResponseEntity.ok(subtaskService.createSubtask(taskId, subtaskDto));
     }
 

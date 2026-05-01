@@ -188,11 +188,11 @@ const TaskDetails: React.FC = () => {
                           <div key={sub.id} className="bg-slate-50 rounded-lg border border-slate-200 p-4">
                             {/* Subtask Header */}
                             <div className="flex items-start justify-between mb-3">
-                              <Link to={`/app/tasks/${sub.id}`} className="flex-1">
-                                <h5 className="font-button text-on-background hover:text-primary transition-colors cursor-pointer">
+                              <div className="flex-1">
+                                <h5 className="font-button text-on-background">
                                   ETH-{String(sub.id).padStart(3, '0')}: {sub.title}
                                 </h5>
-                              </Link>
+                              </div>
                               <div className={`flex items-center gap-1 ${subStatus.bg} ${subStatus.text} px-2 py-1 rounded text-[12px] font-label-caps whitespace-nowrap ml-2`}>
                                 <div className={`w-1.5 h-1.5 rounded-full ${subStatus.dot}`}></div>
                                 {subStatus.label}

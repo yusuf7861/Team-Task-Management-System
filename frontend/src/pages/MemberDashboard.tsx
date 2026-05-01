@@ -41,7 +41,10 @@ const MemberDashboard: React.FC = () => {
             .filter((response): response is PromiseFulfilledResult<{ data: SubtaskDto[] }> => response.status === 'fulfilled')
             .flatMap((response) => response.value.data);
 
-          const uniqueSubtasks = flattened.filter(
+          // Filter subtasks to only show those assigned to the current user
+          const mySubtasksOnly = flattened.filter((subtask) => subtask.assignedToId === user.id);
+
+          const uniqueSubtasks = mySubtasksOnly.filter(
             (subtask, index, array) => array.findIndex((item) => item.id === subtask.id) === index
           );
 

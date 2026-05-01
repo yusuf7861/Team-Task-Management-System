@@ -8,10 +8,12 @@ import com.etharaai.taskmanager.repository.SubtaskRepository;
 import com.etharaai.taskmanager.repository.TaskRepository;
 import com.etharaai.taskmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,7 +27,7 @@ public class TaskService {
     private final TaskMapper taskMapper;
 
     public TaskDto createTask(TaskDto taskDto) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
         Users currentUsers = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -84,6 +86,7 @@ public class TaskService {
         return taskMapper.toDto(updatedTask);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteTask(Long taskId) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found"));

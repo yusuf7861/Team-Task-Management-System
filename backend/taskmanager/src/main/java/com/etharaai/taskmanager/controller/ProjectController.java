@@ -2,6 +2,7 @@ package com.etharaai.taskmanager.controller;
 
 import com.etharaai.taskmanager.dto.ProjectDto;
 import com.etharaai.taskmanager.service.ProjectService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,7 +19,7 @@ public class ProjectController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ProjectDto> createProject(@RequestBody ProjectDto projectDto) {
+    public ResponseEntity<ProjectDto> createProject(@Valid @RequestBody ProjectDto projectDto) {
         return ResponseEntity.ok(projectService.createProject(projectDto));
     }
 

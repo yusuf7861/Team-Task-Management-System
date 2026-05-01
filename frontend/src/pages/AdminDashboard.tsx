@@ -45,7 +45,7 @@ const AdminDashboard: React.FC = () => {
 
   // Subtask UI state
   const [expandedTasks, setExpandedTasks] = useState<Record<number, boolean>>({});
-  const [subtasksMap, setSubtasksMap] = useState<Record<number, TaskDto[]>>({});
+  const [subtasksMap, setSubtasksMap] = useState<Record<number, SubtaskDto[]>>({});
   const [showCreateSubtask, setShowCreateSubtask] = useState(false);
   const [subtaskParentId, setSubtaskParentId] = useState<number | null>(null);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
@@ -417,7 +417,7 @@ const AdminDashboard: React.FC = () => {
                     } else {
                       subs.map((sub) => rows.push(
                         <tr key={sub.id} className="bg-surface-bright">
-                          <td className="py-2 px-6">↳ <Link to={`/app/tasks/${sub.id}`} className="font-button text-button text-on-background group-hover:text-primary transition-colors">{sub.title}</Link></td>
+                          <td className="py-2 px-6">↳ <span className="font-button text-button text-on-background group-hover:text-primary transition-colors">{sub.title}</span></td>
                           <td className="py-2 px-4 hidden sm:table-cell text-on-surface-variant">{sub.assignedToName || 'Unassigned'}</td>
                           <td className="py-2 px-4">{statusBadge(sub.status)}</td>
                         </tr>

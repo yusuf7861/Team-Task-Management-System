@@ -15,9 +15,10 @@ const MemberDashboard: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [statsRes, tasksRes, usersRes] = await Promise.allSettled([
+      const [statsRes, tasksRes, subtasksRes, usersRes] = await Promise.allSettled([
         dashboardApi.getStats(),
         tasksApi.getMyTasks(),
+        subtasksApi.getMySubtasks(),
         usersApi.getAll(),
       ]);
 
@@ -25,48 +26,12 @@ const MemberDashboard: React.FC = () => {
         setStats(statsRes.value.data);
       }
 
-      let resolvedTasks: TaskDto[] = [];
       if (tasksRes.status === 'fulfilled') {
-        resolvedTasks = tasksRes.value.data;
-        setMyTasks(resolvedTasks);
+        setMyTasks(tasksRes.value.data);
+      }
 
-        if (resolvedTasks.length > 0) {
-          const subtaskResponses = await Promise.allSettled(
-            resolvedTasks
-              .filter((task) => task.id != null)
-              .map((task) => subtasksApi.getByTask(task.id as number))
-          );
-
-          const flattened = subtaskResponses
-            .filter((response): response is PromiseFulfilledResult<{ data: SubtaskDto[] }> => response.status === 'fulfilled')
-            .flatMap((response) => response.value.data);
-
-          // Filter subtasks to only show those assigned to the current user
-          const mySubtasksOnly = flattened.filter((subtask) => subtask.assignedToId === user.id);
-
-          const uniqueSubtasks = mySubtasksOnly.filter(
-            (subtask, index, array) => array.findIndex((item) => item.id === subtask.id) === index
-          );
-
-          setMySubtasks(uniqueSubtasks);
-        } else {
-          // Fallback for users who only have standalone subtasks.
-          try {
-            const { data } = await subtasksApi.getMySubtasks();
-            setMySubtasks(data);
-          } catch (err) {
-            console.error('Failed to load subtasks', err);
-            setMySubtasks([]);
-          }
-        }
-      } else {
-        try {
-          const { data } = await subtasksApi.getMySubtasks();
-          setMySubtasks(data);
-        } catch (err) {
-          console.error('Failed to load subtasks', err);
-          setMySubtasks([]);
-        }
+      if (subtasksRes.status === 'fulfilled') {
+        setMySubtasks(subtasksRes.value.data);
       }
 
       if (usersRes.status === 'fulfilled') {
@@ -123,6 +88,10 @@ const MemberDashboard: React.FC = () => {
   const overdueTasks = myTasks.filter(
     (t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE'
   );
+  const overdueSubtasks = mySubtasks.filter(
+    (t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE'
+  );
+  const totalOverdueCount = (stats?.overdueTasks || 0);
 
   return (
     <>
@@ -161,13 +130,13 @@ const MemberDashboard: React.FC = () => {
         <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm flex flex-col gap-2">
           <div className="flex justify-between items-start">
             <span className="font-button text-button text-on-surface-variant">In Progress</span>
-            <div className="w-8 h-8 rounded bg-secondary-fixed text-secondary flex items-center justify-center">
-              <span className="material-symbols-outlined text-[18px]">pending</span>
-            </div>
+            <div className="w-8 h-8 rounded bg-secondary-container text-secondary flex items-center justify-center">
+            <span className="material-symbols-outlined text-[18px]">pending</span>
           </div>
-          <span className="font-h1 text-h1 text-on-background">{inProgressTasks.length}</span>
-          <span className="font-label-caps text-label-caps text-outline">Currently working on</span>
         </div>
+        <span className="font-h1 text-h1 text-on-background">{stats?.pendingTasks || 0}</span>
+        <span className="font-label-caps text-label-caps text-outline">Currently working on</span>
+      </div>
 
         <div className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md shadow-sm flex flex-col gap-2">
           <div className="flex justify-between items-start">
@@ -176,31 +145,33 @@ const MemberDashboard: React.FC = () => {
               <span className="material-symbols-outlined text-[18px]">check_circle</span>
             </div>
           </div>
-          <span className="font-h1 text-h1 text-on-background">{doneTasks.length}</span>
+          <span className="font-h1 text-h1 text-on-background">{stats?.completedTasks || 0}</span>
           <span className="font-label-caps text-label-caps text-outline">{completionRate}% done</span>
         </div>
 
-        <div className={`${overdueTasks.length > 0 ? 'bg-error-container border-error-container' : 'bg-surface-container-lowest border-outline-variant'} border rounded-lg p-md shadow-sm flex flex-col gap-2 relative overflow-hidden`}>
-          {overdueTasks.length > 0 && <div className="absolute top-0 right-0 w-24 h-24 bg-on-error-container opacity-5 rounded-full -mr-8 -mt-8"></div>}
+        <div className={`${(stats?.overdueTasks || 0) > 0 ? 'bg-error-container border-error-container' : 'bg-surface-container-lowest border-outline-variant'} border rounded-lg p-md shadow-sm flex flex-col gap-2 relative overflow-hidden`}>
+          {(stats?.overdueTasks || 0) > 0 && <div className="absolute top-0 right-0 w-24 h-24 bg-on-error-container opacity-5 rounded-full -mr-8 -mt-8"></div>}
           <div className="flex justify-between items-start relative z-10">
-            <span className={`font-button text-button ${overdueTasks.length > 0 ? 'text-on-error-container' : 'text-on-surface-variant'}`}>Overdue</span>
-            <div className={`w-8 h-8 rounded ${overdueTasks.length > 0 ? 'bg-surface-container-lowest text-error' : 'bg-surface-container text-outline'} flex items-center justify-center`}>
-              <span className="material-symbols-outlined text-[18px]">{overdueTasks.length > 0 ? 'warning' : 'done_all'}</span>
+            <span className={`font-button text-button ${(stats?.overdueTasks || 0) > 0 ? 'text-on-error-container' : 'text-on-surface-variant'}`}>Overdue</span>
+            <div className={`w-8 h-8 rounded ${(stats?.overdueTasks || 0) > 0 ? 'bg-surface-container-lowest text-error' : 'bg-surface-container text-outline'} flex items-center justify-center`}>
+              <span className="material-symbols-outlined text-[18px]">{(stats?.overdueTasks || 0) > 0 ? 'warning' : 'done_all'}</span>
             </div>
           </div>
-          <span className={`font-h1 text-h1 relative z-10 ${overdueTasks.length > 0 ? 'text-on-error-container' : 'text-on-background'}`}>{overdueTasks.length}</span>
-          <span className={`font-label-caps text-label-caps relative z-10 ${overdueTasks.length > 0 ? 'text-on-error-container opacity-80' : 'text-outline'}`}>
-            {overdueTasks.length > 0 ? 'Needs your attention!' : 'All caught up!'}
+          <span className={`font-h1 text-h1 relative z-10 ${(stats?.overdueTasks || 0) > 0 ? 'text-on-error-container' : 'text-on-background'}`}>{stats?.overdueTasks || 0}</span>
+          <span className={`font-label-caps text-label-caps relative z-10 ${(stats?.overdueTasks || 0) > 0 ? 'text-on-error-container opacity-80' : 'text-outline'}`}>
+            {(stats?.overdueTasks || 0) > 0 ? 'Needs your attention!' : 'All caught up!'}
           </span>
         </div>
       </div>
 
       {/* Overdue Alert */}
-      {overdueTasks.length > 0 && (
+      {totalOverdueCount > 0 && (
         <div className="bg-error-container border border-error-container rounded-xl p-md flex items-start gap-md">
-          <span className="material-symbols-outlined text-on-error-container text-[24px] mt-0.5">schedule</span>
+          <div className="w-10 h-10 rounded-full bg-surface-container-lowest text-error flex items-center justify-center flex-shrink-0">
+            <span className="material-symbols-outlined">priority_high</span>
+          </div>
           <div>
-            <h4 className="font-button text-button text-on-error-container mb-1">You have {overdueTasks.length} overdue task{overdueTasks.length > 1 ? 's' : ''}</h4>
+            <h4 className="font-button text-button text-on-error-container mb-1">You have {totalOverdueCount} overdue item{totalOverdueCount > 1 ? 's' : ''}</h4>
             <div className="flex flex-wrap gap-sm">
               {overdueTasks.map((task) => (
                 <Link key={task.id} to={`/app/tasks/${task.id}`} className="font-body-sm text-body-sm text-on-error-container underline hover:opacity-80">

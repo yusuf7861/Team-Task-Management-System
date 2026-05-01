@@ -9,9 +9,37 @@ const Kanban: React.FC = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const { data } = await tasksApi.getMyTasks();
-        // Attempt to load subtasks for each task in parallel, but tolerate failures
-        const taskList: TaskDto[] = data;
+        const [tasksRes, subtasksRes] = await Promise.allSettled([
+          tasksApi.getMyTasks(),
+          subtasksApi.getMySubtasks()
+        ]);
+
+        let taskList: TaskDto[] = [];
+        if (tasksRes.status === 'fulfilled') {
+          taskList = tasksRes.value.data;
+        }
+
+        let mySubtasks: SubtaskDto[] = [];
+        if (subtasksRes.status === 'fulfilled') {
+          mySubtasks = subtasksRes.value.data;
+        }
+
+        // Identify parent tasks for my subtasks that aren't already in my task list
+        const existingTaskIds = new Set(taskList.map(t => t.id));
+        const missingTaskIds = [...new Set(mySubtasks.map(s => s.taskId))].filter(id => !existingTaskIds.has(id));
+
+        if (missingTaskIds.length > 0) {
+          const missingTaskResponses = await Promise.allSettled(
+            missingTaskIds.map(id => tasksApi.getById(id))
+          );
+          missingTaskResponses.forEach(res => {
+            if (res.status === 'fulfilled') {
+              taskList.push(res.value.data);
+            }
+          });
+        }
+
+        // Now fetch all subtasks for each task to show the complete picture
         const subtaskCalls = taskList.map((t) =>
           subtasksApi.getByTask(t.id!).then((res) => ({ id: t.id, subtasks: res.data }))
         );

@@ -140,15 +140,9 @@ const TaskDetails: React.FC = () => {
               </div>
             </div>
 
-            <h1 className="font-h1 text-h2 sm:text-h1 text-on-background leading-tight mb-4">
+            <h1 className="font-h1 text-h2 sm:text-h1 text-on-background leading-tight mb-8">
               {task.title}
             </h1>
-
-            {task.description && (
-              <p className="text-on-surface-variant font-body-md leading-relaxed mb-8">
-                {task.description}
-              </p>
-            )}
 
             <div className="flex flex-wrap items-center gap-6 pt-6 border-t border-outline-variant">
               <div className="space-y-1.5">
@@ -184,52 +178,67 @@ const TaskDetails: React.FC = () => {
             )}
           </div>
 
-          {/* Subtasks Section */}
-          {(task.subtasks && task.subtasks.length > 0) ? (
-            <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 sm:p-8 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h4 className="font-h3 text-h3 text-on-background flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">checklist</span>
-                  Subtasks
-                  <span className="text-outline font-body-sm bg-surface-container px-2 py-0.5 rounded-full">{task.subtasks.length}</span>
-                </h4>
-              </div>
-              <div className="space-y-4">
-                {task.subtasks.map((sub) => {
-                  const subStatus = statusConfig[sub.status];
-                  return (
-                    <div key={sub.id} className="bg-background border border-outline-variant rounded-xl p-5 hover:border-primary/30 transition-all group">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                          <h5 className="font-button text-on-background group-hover:text-primary transition-colors">
-                            {sub.title}
-                          </h5>
-                          {sub.description && (
-                            <p className="text-on-surface-variant text-sm line-clamp-1">{sub.description}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 self-end sm:self-auto">
-                          <div className={`flex items-center gap-1.5 ${subStatus.bg} ${subStatus.text} px-2.5 py-1 rounded-full text-[11px] font-label-caps border border-current/10`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${statusConfig[sub.status].dot}`}></div>
-                            {subStatus.label}
+          {/* Description Section */}
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 sm:p-8 shadow-sm">
+            <h3 className="font-h3 text-h3 text-on-background mb-6 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">description</span>
+              Description
+            </h3>
+            <div className="prose prose-blue max-w-none text-on-surface-variant font-body-md leading-relaxed">
+              {task.description ? (
+                <p>{task.description}</p>
+              ) : (
+                <p className="text-outline italic">No description provided.</p>
+              )}
+            </div>
+
+            {/* Subtasks Section */}
+            {task.subtasks && task.subtasks.length > 0 && (
+              <div className="mt-12 pt-8 border-t border-outline-variant">
+                <div className="flex items-center justify-between mb-6">
+                  <h4 className="font-h3 text-h3 text-on-background flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">checklist</span>
+                    Subtasks
+                    <span className="text-outline font-body-sm bg-surface-container px-2 py-0.5 rounded-full">{task.subtasks.length}</span>
+                  </h4>
+                </div>
+                <div className="space-y-4">
+                  {task.subtasks.map((sub) => {
+                    const subStatus = statusConfig[sub.status];
+                    return (
+                      <div key={sub.id} className="bg-background border border-outline-variant rounded-xl p-5 hover:border-primary/30 transition-all group">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="space-y-1">
+                            <h5 className="font-button text-on-background group-hover:text-primary transition-colors">
+                              {sub.title}
+                            </h5>
+                            {sub.description && (
+                              <p className="text-on-surface-variant text-sm line-clamp-1">{sub.description}</p>
+                            )}
                           </div>
-                          <select
-                            value={sub.status}
-                            onChange={(e) => handleSubtaskStatusChange(sub.id, e.target.value as TaskStatus)}
-                            className="bg-surface-container border-none rounded-lg px-2 py-1 text-[12px] font-medium text-on-surface focus:ring-2 focus:ring-primary/20 cursor-pointer"
-                          >
-                            <option value="TODO">To Do</option>
-                            <option value="IN_PROGRESS">In Progress</option>
-                            <option value="DONE">Done</option>
-                          </select>
+                          <div className="flex items-center gap-3 self-end sm:self-auto">
+                            <div className={`flex items-center gap-1.5 ${subStatus.bg} ${subStatus.text} px-2.5 py-1 rounded-full text-[11px] font-label-caps border border-current/10`}>
+                              <div className={`w-1.5 h-1.5 rounded-full ${subStatus.dot}`}></div>
+                              {subStatus.label}
+                            </div>
+                            <select
+                              value={sub.status}
+                              onChange={(e) => handleSubtaskStatusChange(sub.id, e.target.value as TaskStatus)}
+                              className="bg-surface-container border-none rounded-lg px-2 py-1 text-[12px] font-medium text-on-surface focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                            >
+                              <option value="TODO">To Do</option>
+                              <option value="IN_PROGRESS">In Progress</option>
+                              <option value="DONE">Done</option>
+                            </select>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ) : null}
+            )}
+          </div>
         </div>
 
         {/* Sidebar Metadata */}

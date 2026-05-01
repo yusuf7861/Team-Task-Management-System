@@ -18,4 +18,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     long countByAssignedToIdAndDueDateBeforeAndStatusNot(Long userId, LocalDate date, TaskStatus status);
     long countByDueDateNotNullAndDueDateBeforeAndStatusNot(LocalDate date, TaskStatus status);
     long countByAssignedToIdAndDueDateNotNullAndDueDateBeforeAndStatusNot(Long userId, LocalDate date, TaskStatus status);
+    long countByAssignedToId(Long userId);
+    long countByStatusIn(java.util.Collection<com.etharaai.taskmanager.entity.TaskStatus> statuses);
+    long countByAssignedToIdAndStatusIn(Long userId, java.util.Collection<com.etharaai.taskmanager.entity.TaskStatus> statuses);
 }

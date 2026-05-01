@@ -37,14 +37,6 @@ const SidebarLayout: React.FC = () => {
             <span className="text-outline font-label-caps text-label-caps">Workspace</span>
           </div>
         </div>
-
-        {user.role === 'ADMIN' && (
-          <button className="w-full bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-button text-button py-2 px-4 rounded transition-colors duration-200 mb-6 flex items-center justify-center gap-2">
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            New Task
-          </button>
-        )}
-
         <nav className="flex flex-col gap-1 flex-grow">
           <Link className={getNavLinkClass('/app/dashboard')} to="/app/dashboard">
             <span className={getIconClass('/app/dashboard')}>dashboard</span>

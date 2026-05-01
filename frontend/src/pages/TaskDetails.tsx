@@ -201,6 +201,12 @@ const TaskDetails: React.FC = () => {
                     <span className="text-outline font-body-sm bg-surface-container px-2 py-0.5 rounded-full">{task.subtasks.length}</span>
                   </h4>
                 </div>
+                {subtaskStatusError && (
+                  <div className="mb-4 p-3 bg-error-container text-on-error-container rounded-lg text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
+                    <span className="material-symbols-outlined text-[18px]">error</span>
+                    {subtaskStatusError}
+                  </div>
+                )}
                 <div className="space-y-4">
                   {task.subtasks.map((sub) => {
                     const subStatus = statusConfig[sub.status];

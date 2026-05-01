@@ -3,20 +3,18 @@ package com.etharaai.taskmanager.dto;
 import com.etharaai.taskmanager.entity.TaskStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
-public record TaskDto(
+public record SubtaskDto(
     Long id,
     String title,
     String description,
     TaskStatus status,
     LocalDate dueDate,
-    Long projectId,
-    String projectName,
+    Long taskId,
     Long assignedToId,
     String assignedToName,
     Long createdById,
     String createdByName,
-    LocalDateTime createdAt,
-    List<SubtaskDto> subtasks
+    LocalDateTime createdAt
 ) {}
+

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { tasksApi, type TaskDto, type TaskStatus } from '../services/api';
+import { tasksApi, subtasksApi, type TaskDto, type SubtaskDto, type TaskStatus } from '../services/api';
 
 const statusConfig: Record<TaskStatus, { label: string; bg: string; text: string; dot: string }> = {
   TODO: { label: 'To Do', bg: 'bg-surface-container', text: 'text-on-surface-variant', dot: 'bg-outline' },
@@ -18,14 +18,12 @@ const TaskDetails: React.FC = () => {
   useEffect(() => {
     const fetchTask = async () => {
       try {
-        // Fetch all user tasks and find the one matching the id
-        const { data } = await tasksApi.getMyTasks();
-        const found = data.find((t) => t.id === Number(id));
-        if (found) {
-          setTask(found);
-        } else {
-          setError('Task not found');
+        if (!id) {
+          setError('Task id missing');
+          return;
         }
+        const { data } = await tasksApi.getById(Number(id));
+        setTask(data);
       } catch (err) {
         console.error('Failed to load task', err);
         setError('Failed to load task details');
@@ -130,11 +128,86 @@ const TaskDetails: React.FC = () => {
               Description
             </h3>
             <div className="prose prose-sm max-w-none text-slate-600 font-body-md">
-              {task.description ? (
-                <p>{task.description}</p>
-              ) : (
-                <p className="text-slate-400 italic">No description provided.</p>
-              )}
+                {task.description ? (
+                  <p>{task.description}</p>
+                ) : (
+                  <p className="text-slate-400 italic">No description provided.</p>
+                )}
+                {/* Subtasks (embedded in task response) */}
+                {task.subtasks && task.subtasks.length > 0 && (
+                  <div className="mt-6 pt-4 border-t border-slate-200">
+                    <h4 className="font-h3 text-on-background mb-4">Subtasks ({task.subtasks.length})</h4>
+                    <div className="space-y-3">
+                      {task.subtasks.map((sub) => {
+                        const subStatus = statusConfig[sub.status];
+                        return (
+                          <div key={sub.id} className="bg-slate-50 rounded-lg border border-slate-200 p-4">
+                            {/* Subtask Header */}
+                            <div className="flex items-start justify-between mb-3">
+                              <Link to={`/app/tasks/${sub.id}`} className="flex-1">
+                                <h5 className="font-button text-on-background hover:text-primary transition-colors cursor-pointer">
+                                  ETH-{String(sub.id).padStart(3, '0')}: {sub.title}
+                                </h5>
+                              </Link>
+                              <div className={`flex items-center gap-1 ${subStatus.bg} ${subStatus.text} px-2 py-1 rounded text-[12px] font-label-caps whitespace-nowrap ml-2`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${subStatus.dot}`}></div>
+                                {subStatus.label}
+                              </div>
+                            </div>
+                            
+                            {/* Description */}
+                            {sub.description && (
+                              <p className="text-slate-600 font-body-sm mb-3">{sub.description}</p>
+                            )}
+                            
+                            {/* Subtask Details Grid */}
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              {/* Assigned To */}
+                              <div>
+                                <span className="font-label-caps text-slate-500 text-[11px] uppercase block mb-1">Assigned To</span>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center text-[11px] font-bold">
+                                    {(sub.assignedToName || '?').charAt(0).toUpperCase()}
+                                  </div>
+                                  <span className="font-body-sm text-slate-700">{sub.assignedToName || 'Unassigned'}</span>
+                                </div>
+                              </div>
+                              
+                              {/* Due Date */}
+                              <div>
+                                <span className="font-label-caps text-slate-500 text-[11px] uppercase block mb-1">Due Date</span>
+                                <div className="flex items-center gap-1 font-body-sm text-slate-700">
+                                  <span className="material-symbols-outlined text-[14px] text-slate-400">calendar_today</span>
+                                  {sub.dueDate ? new Date(sub.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
+                                </div>
+                              </div>
+                              
+                              {/* Created By */}
+                              <div>
+                                <span className="font-label-caps text-slate-500 text-[11px] uppercase block mb-1">Created By</span>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-secondary-fixed text-secondary flex items-center justify-center text-[11px] font-bold">
+                                    {(sub.createdByName || '?').charAt(0).toUpperCase()}
+                                  </div>
+                                  <span className="font-body-sm text-slate-700">{sub.createdByName || 'Unknown'}</span>
+                                </div>
+                              </div>
+                              
+                              {/* Created At */}
+                              <div>
+                                <span className="font-label-caps text-slate-500 text-[11px] uppercase block mb-1">Created</span>
+                                <div className="flex items-center gap-1 font-body-sm text-slate-700">
+                                  <span className="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
+                                  {sub.createdAt ? new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
             </div>
           </div>
         </div>

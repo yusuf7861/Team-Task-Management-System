@@ -49,6 +49,8 @@ const Projects: React.FC = () => {
     fetchData();
   }, []);
 
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
@@ -95,12 +97,14 @@ const Projects: React.FC = () => {
           <h1 className="font-h1 text-h1 text-on-background">Projects</h1>
           <p className="font-body-md text-body-md text-on-surface-variant">Manage and track your team's projects.</p>
         </div>
-        <button 
-          onClick={() => setShowCreateProject(true)}
-          className="bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-button text-button px-md py-sm rounded-lg transition-colors flex items-center gap-sm">
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          New Project
-        </button>
+        {user.role === 'ADMIN' && (
+          <button
+            onClick={() => setShowCreateProject(true)}
+            className="bg-primary hover:bg-on-primary-fixed-variant text-on-primary font-button text-button px-md py-sm rounded-lg transition-colors flex items-center gap-sm">
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            New Project
+          </button>
+        )}
       </div>
 
       {/* Projects Grid */}
@@ -164,7 +168,7 @@ const Projects: React.FC = () => {
       {/* ── Create Project Modal ── */}
       {showCreateProject && (
         <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4" onClick={() => setShowCreateProject(false)}>
-          <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-md p-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-md p-xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-h2 text-h2 text-on-background mb-lg">Create Project</h2>
             <form onSubmit={handleCreateProject} className="space-y-lg">
               <div className="space-y-sm">

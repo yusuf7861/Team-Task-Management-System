@@ -50,6 +50,8 @@ public class TaskService {
         return taskMapper.toDto(savedTask);
     }
 
+
+
     public List<TaskDto> getTasksByProjectId(Long projectId) {
         return taskRepository.findByProjectId(projectId).stream()
                 .map(taskMapper::toDto)
@@ -72,5 +74,17 @@ public class TaskService {
         task.setStatus(newStatus);
         Task updatedTask = taskRepository.save(task);
         return taskMapper.toDto(updatedTask);
+    }
+
+    public void deleteTask(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+        taskRepository.delete(task);
+    }
+
+    public TaskDto getTaskWithSubtasks(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+        return taskMapper.toDto(task);
     }
 }

@@ -1,0 +1,128 @@
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: '/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Attach JWT token to every outgoing request
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Handle 401 responses globally — redirect to login
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ─── Auth ────────────────────────────────────────────────
+export interface AuthRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  role: 'ADMIN' | 'MEMBER';
+}
+
+export interface AuthResponse {
+  token: string;
+  id: number;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'MEMBER';
+}
+
+export const authApi = {
+  login: (data: AuthRequest) => api.post<AuthResponse>('/auth/login', data),
+  signup: (data: RegisterRequest) => api.post<AuthResponse>('/auth/signup', data),
+};
+
+// ─── Dashboard ───────────────────────────────────────────
+export interface DashboardStats {
+  totalTasks: number;
+  completedTasks: number;
+  pendingTasks: number;
+  overdueTasks: number;
+}
+
+export const dashboardApi = {
+  getStats: () => api.get<DashboardStats>('/dashboard/stats'),
+};
+
+// ─── Projects ────────────────────────────────────────────
+export interface ProjectDto {
+  id: number | null;
+  name: string;
+  description: string;
+  createdById: number | null;
+  createdByName: string | null;
+  createdAt: string | null;
+}
+
+export const projectsApi = {
+  getAll: () => api.get<ProjectDto[]>('/projects'),
+  getById: (id: number) => api.get<ProjectDto>(`/projects/${id}`),
+  create: (data: Partial<ProjectDto>) => api.post<ProjectDto>('/projects', data),
+};
+
+// ─── Tasks ───────────────────────────────────────────────
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+
+export interface TaskDto {
+  id: number | null;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  dueDate: string | null;
+  projectId: number | null;
+  projectName: string | null;
+  assignedToId: number | null;
+  assignedToName: string | null;
+  createdById: number | null;
+  createdByName: string | null;
+  createdAt: string | null;
+}
+
+export const tasksApi = {
+  getByProject: (projectId: number) => api.get<TaskDto[]>(`/tasks/project/${projectId}`),
+  getMyTasks: () => api.get<TaskDto[]>('/tasks/my-tasks'),
+  create: (data: Partial<TaskDto>) => api.post<TaskDto>('/tasks', data),
+  updateStatus: (id: number, status: TaskStatus) =>
+    api.patch<TaskDto>(`/tasks/${id}/status`, null, { params: { status } }),
+};
+
+// ─── Users (Team) ────────────────────────────────────────
+export interface UserDto {
+  id: number;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'MEMBER';
+  createdAt: string;
+}
+
+export const usersApi = {
+  getAll: () => api.get<UserDto[]>('/users'),
+};
+
+export default api;

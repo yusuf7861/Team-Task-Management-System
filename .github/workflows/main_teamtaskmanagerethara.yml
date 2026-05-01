@@ -1,4 +1,4 @@
-name: Build and deploy Spring Boot app to Azure Web App - teamtaskmanagerethara
+name: Build and Deploy Spring Boot to Azure App Service
 
 on:
   push:
@@ -13,20 +13,27 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      # 1️⃣ Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Java
+      # 2️⃣ Setup Java
+      - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
 
-      # ✅ IMPORTANT FIX
-      - name: Build backend
+      # 3️⃣ Build backend (IMPORTANT: correct path)
+      - name: Build Spring Boot app
         working-directory: backend/taskmanager
         run: mvn clean package -DskipTests
 
-      # ✅ Upload correct JAR
+      # 4️⃣ Debug (helps avoid silent errors)
+      - name: List build output
+        run: ls -R backend/taskmanager/target
+
+      # 5️⃣ Upload JAR
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -38,16 +45,27 @@ jobs:
     needs: build
 
     steps:
+      # 6️⃣ Download artifact
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: java-app
 
-      # ✅ Deploy JAR instead of WAR
+      # 7️⃣ Debug check
+      - name: Verify files
+        run: |
+          echo "Downloaded files:"
+          ls -l
+
+      # 8️⃣ Rename JAR → Azure expects fixed name
+      - name: Rename JAR to app.jar
+        run: mv *.jar app.jar
+
+      # 9️⃣ Deploy to Azure
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: teamtaskmanagerethara
           slot-name: Production
-          package: '*.jar'
+          package: app.jar
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_94EE79DB3FC64DF6BFC480DD9F33BF3D }}

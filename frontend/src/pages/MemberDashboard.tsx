@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { dashboardApi, tasksApi, usersApi, type DashboardStats, type TaskDto, type TaskStatus, type UserDto } from '../services/api';
+import { dashboardApi, tasksApi, subtasksApi, usersApi, type DashboardStats, type TaskDto, type SubtaskDto, type TaskStatus, type UserDto } from '../services/api';
 
 
 
 const MemberDashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [myTasks, setMyTasks] = useState<TaskDto[]>([]);
+  const [mySubtasks, setMySubtasks] = useState<SubtaskDto[]>([]);
   const [teamMembers, setTeamMembers] = useState<UserDto[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -14,14 +15,60 @@ const MemberDashboard: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [statsRes, tasksRes, usersRes] = await Promise.all([
+      const [statsRes, tasksRes, usersRes] = await Promise.allSettled([
         dashboardApi.getStats(),
         tasksApi.getMyTasks(),
         usersApi.getAll(),
       ]);
-      setStats(statsRes.data);
-      setMyTasks(tasksRes.data);
-      setTeamMembers(usersRes.data);
+
+      if (statsRes.status === 'fulfilled') {
+        setStats(statsRes.value.data);
+      }
+
+      let resolvedTasks: TaskDto[] = [];
+      if (tasksRes.status === 'fulfilled') {
+        resolvedTasks = tasksRes.value.data;
+        setMyTasks(resolvedTasks);
+
+        if (resolvedTasks.length > 0) {
+          const subtaskResponses = await Promise.allSettled(
+            resolvedTasks
+              .filter((task) => task.id != null)
+              .map((task) => subtasksApi.getByTask(task.id as number))
+          );
+
+          const flattened = subtaskResponses
+            .filter((response): response is PromiseFulfilledResult<{ data: SubtaskDto[] }> => response.status === 'fulfilled')
+            .flatMap((response) => response.value.data);
+
+          const uniqueSubtasks = flattened.filter(
+            (subtask, index, array) => array.findIndex((item) => item.id === subtask.id) === index
+          );
+
+          setMySubtasks(uniqueSubtasks);
+        } else {
+          // Fallback for users who only have standalone subtasks.
+          try {
+            const { data } = await subtasksApi.getMySubtasks();
+            setMySubtasks(data);
+          } catch (err) {
+            console.error('Failed to load subtasks', err);
+            setMySubtasks([]);
+          }
+        }
+      } else {
+        try {
+          const { data } = await subtasksApi.getMySubtasks();
+          setMySubtasks(data);
+        } catch (err) {
+          console.error('Failed to load subtasks', err);
+          setMySubtasks([]);
+        }
+      }
+
+      if (usersRes.status === 'fulfilled') {
+        setTeamMembers(usersRes.value.data);
+      }
     } catch (err) {
       console.error('Failed to load dashboard', err);
     } finally {
@@ -66,6 +113,9 @@ const MemberDashboard: React.FC = () => {
   const todoTasks = myTasks.filter((t) => t.status === 'TODO');
   const inProgressTasks = myTasks.filter((t) => t.status === 'IN_PROGRESS');
   const doneTasks = myTasks.filter((t) => t.status === 'DONE');
+  const todoSubtasks = mySubtasks.filter((t) => t.status === 'TODO');
+  const inProgressSubtasks = mySubtasks.filter((t) => t.status === 'IN_PROGRESS');
+  const doneSubtasks = mySubtasks.filter((t) => t.status === 'DONE');
 
   const overdueTasks = myTasks.filter(
     (t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'DONE'
@@ -281,6 +331,84 @@ const MemberDashboard: React.FC = () => {
                       +{doneTasks.length - 3} more completed
                     </p>
                   )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* My Subtasks */}
+      <section className="flex flex-col gap-md">
+        <div className="flex justify-between items-center border-b border-outline-variant pb-2">
+          <h3 className="font-h3 text-h3 text-on-background">My Subtasks</h3>
+          <span className="font-body-sm text-body-sm text-on-surface-variant">{mySubtasks.length} total</span>
+        </div>
+
+        {mySubtasks.length === 0 ? (
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-xl text-center">
+            <span className="material-symbols-outlined text-[48px] text-outline opacity-30 block mb-md">playlist_add_check</span>
+            <p className="font-body-md text-body-md text-on-surface-variant">No subtasks assigned to you yet.</p>
+            <p className="font-body-sm text-body-sm text-outline mt-sm">They will appear here when your tasks are broken down further.</p>
+          </div>
+        ) : (
+          <div className="space-y-sm">
+            {todoSubtasks.length > 0 && (
+              <div>
+                <h4 className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-wider mb-sm flex items-center gap-xs">
+                  <div className="w-2 h-2 rounded-full bg-outline"></div>
+                  To Do ({todoSubtasks.length})
+                </h4>
+                <div className="space-y-1">
+                  {todoSubtasks.map((subtask) => (
+                    <Link key={subtask.id} to={`/app/tasks/${subtask.taskId}`} className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md flex items-start justify-between gap-md hover:shadow-sm transition-shadow group">
+                      <div className="min-w-0">
+                        <div className="font-button text-button text-on-background group-hover:text-primary transition-colors block truncate">{subtask.title}</div>
+                        <span className="font-label-caps text-label-caps text-outline block truncate">{subtask.description || 'No description'}</span>
+                      </div>
+                      <span className="font-label-caps text-label-caps text-outline flex-shrink-0">Task #{String(subtask.taskId).padStart(3, '0')}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {inProgressSubtasks.length > 0 && (
+              <div>
+                <h4 className="font-label-caps text-label-caps text-secondary uppercase tracking-wider mb-sm flex items-center gap-xs mt-md">
+                  <div className="w-2 h-2 rounded-full bg-secondary"></div>
+                  In Progress ({inProgressSubtasks.length})
+                </h4>
+                <div className="space-y-1">
+                  {inProgressSubtasks.map((subtask) => (
+                    <Link key={subtask.id} to={`/app/tasks/${subtask.taskId}`} className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md flex items-start justify-between gap-md hover:shadow-sm transition-shadow group">
+                      <div className="min-w-0">
+                        <div className="font-button text-button text-on-background group-hover:text-primary transition-colors block truncate">{subtask.title}</div>
+                        <span className="font-label-caps text-label-caps text-outline block truncate">{subtask.description || 'No description'}</span>
+                      </div>
+                      <span className="font-label-caps text-label-caps text-outline flex-shrink-0">Task #{String(subtask.taskId).padStart(3, '0')}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {doneSubtasks.length > 0 && (
+              <div>
+                <h4 className="font-label-caps text-label-caps text-tertiary uppercase tracking-wider mb-sm flex items-center gap-xs mt-md">
+                  <div className="w-2 h-2 rounded-full bg-tertiary"></div>
+                  Completed ({doneSubtasks.length})
+                </h4>
+                <div className="space-y-1">
+                  {doneSubtasks.map((subtask) => (
+                    <Link key={subtask.id} to={`/app/tasks/${subtask.taskId}`} className="bg-surface-container-lowest border border-outline-variant rounded-lg p-md flex items-start justify-between gap-md hover:shadow-sm transition-shadow group opacity-90">
+                      <div className="min-w-0">
+                        <div className="font-button text-button text-on-background group-hover:text-primary transition-colors block truncate">{subtask.title}</div>
+                        <span className="font-label-caps text-label-caps text-outline block truncate">{subtask.description || 'No description'}</span>
+                      </div>
+                      <span className="font-label-caps text-label-caps text-outline flex-shrink-0">Task #{String(subtask.taskId).padStart(3, '0')}</span>
+                    </Link>
+                  ))}
                 </div>
               </div>
             )}

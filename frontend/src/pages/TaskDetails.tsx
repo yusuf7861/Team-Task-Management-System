@@ -14,6 +14,8 @@ const TaskDetails: React.FC = () => {
   const [task, setTask] = useState<TaskDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [taskStatusError, setTaskStatusError] = useState('');
+  const [subtaskStatusError, setSubtaskStatusError] = useState('');
 
   useEffect(() => {
     const fetchTask = async () => {
@@ -36,11 +38,36 @@ const TaskDetails: React.FC = () => {
 
   const handleStatusChange = async (newStatus: TaskStatus) => {
     if (!task?.id) return;
+
+    if (newStatus === 'DONE' && task.subtasks?.some((subtask) => subtask.status !== 'DONE')) {
+      setTaskStatusError('Complete all subtasks before marking the task as done.');
+      return;
+    }
+
     try {
       const { data } = await tasksApi.updateStatus(task.id, newStatus);
       setTask(data);
+      setTaskStatusError('');
     } catch (err) {
       console.error('Failed to update status', err);
+      setTaskStatusError('Unable to update task status right now.');
+    }
+  };
+
+  const handleSubtaskStatusChange = async (subtaskId: number, newStatus: TaskStatus) => {
+    try {
+      const { data } = await subtasksApi.updateStatus(subtaskId, newStatus);
+      setTask((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          subtasks: prev.subtasks?.map((subtask) => (subtask.id === subtaskId ? data : subtask)),
+        };
+      });
+      setSubtaskStatusError('');
+    } catch (err) {
+      console.error('Failed to update subtask status', err);
+      setSubtaskStatusError('You can only update subtasks assigned to you or created by you.');
     }
   };
 
@@ -71,6 +98,7 @@ const TaskDetails: React.FC = () => {
   }
 
   const status = statusConfig[task.status];
+  const canMarkTaskDone = !task.subtasks || task.subtasks.every((subtask) => subtask.status === 'DONE');
 
   return (
     <>
@@ -110,7 +138,8 @@ const TaskDetails: React.FC = () => {
                     <button
                       key={s}
                       onClick={() => handleStatusChange(s)}
-                      className={`w-full text-left px-3 py-2 font-body-sm text-body-sm hover:bg-slate-50 flex items-center gap-2 first:rounded-t-lg last:rounded-b-lg ${task.status === s ? 'bg-slate-50 font-medium' : ''}`}
+                      disabled={s === 'DONE' && !canMarkTaskDone}
+                      className={`w-full text-left px-3 py-2 font-body-sm text-body-sm hover:bg-slate-50 flex items-center gap-2 first:rounded-t-lg last:rounded-b-lg ${task.status === s ? 'bg-slate-50 font-medium' : ''} ${s === 'DONE' && !canMarkTaskDone ? 'opacity-40 cursor-not-allowed hover:bg-white' : ''}`}
                     >
                       <div className={`w-2 h-2 rounded-full ${statusConfig[s].dot}`}></div>
                       {statusConfig[s].label}
@@ -119,6 +148,21 @@ const TaskDetails: React.FC = () => {
                 </div>
               </div>
             </div>
+            {!canMarkTaskDone && task.subtasks && task.subtasks.length > 0 && (
+              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3">
+                Complete all subtasks before marking this task as done.
+              </p>
+            )}
+            {taskStatusError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3">
+                {taskStatusError}
+              </p>
+            )}
+            {subtaskStatusError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3">
+                {subtaskStatusError}
+              </p>
+            )}
           </div>
 
           {/* Description */}
@@ -201,6 +245,20 @@ const TaskDetails: React.FC = () => {
                                   {sub.createdAt ? new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'}
                                 </div>
                               </div>
+                            </div>
+
+                            {/* Subtask Status Editor */}
+                            <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between gap-3">
+                              <span className="font-label-caps text-slate-500 text-[11px] uppercase">Update Status</span>
+                              <select
+                                value={sub.status}
+                                onChange={(e) => handleSubtaskStatusChange(sub.id, e.target.value as TaskStatus)}
+                                className="border border-slate-200 rounded-lg bg-white px-3 py-2 text-sm text-on-background focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                              >
+                                <option value="TODO">To Do</option>
+                                <option value="IN_PROGRESS">In Progress</option>
+                                <option value="DONE">Done</option>
+                              </select>
                             </div>
                           </div>
                         );

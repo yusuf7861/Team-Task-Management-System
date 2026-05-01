@@ -61,13 +61,34 @@ public class SubtaskService {
                 .collect(Collectors.toList());
     }
 
+    public List<SubtaskDto> getSubtasksByUserId(Long userId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUsers = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (currentUsers.getRole() != Role.ADMIN && !currentUsers.getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized to view subtasks for this user");
+        }
+
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return subtaskRepository.findByAssignedToId(userId).stream()
+                .map(subtaskMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
     public SubtaskDto updateSubtaskStatus(Long subtaskId, TaskStatus newStatus) {
         Subtask subtask = subtaskRepository.findById(subtaskId)
                 .orElseThrow(() -> new RuntimeException("Subtask not found"));
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        if (!subtask.getAssignedTo().getEmail().equals(email) && !subtask.getCreatedBy().getEmail().equals(email)) {
+        // Check if user is the assignee or the creator
+        boolean isAssignee = subtask.getAssignedTo() != null && subtask.getAssignedTo().getEmail().equals(email);
+        boolean isCreator = subtask.getCreatedBy().getEmail().equals(email);
+
+        if (!isAssignee && !isCreator) {
             throw new RuntimeException("Unauthorized to update subtask status");
         }
 
@@ -87,6 +108,14 @@ public class SubtaskService {
         Subtask subtask = subtaskRepository.findById(subtaskId)
                 .orElseThrow(() -> new RuntimeException("Subtask not found"));
         return subtaskMapper.toDto(subtask);
+    }
+
+    public List<SubtaskDto> getMySubtasks() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Users currentUsers = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return getSubtasksByUserId(currentUsers.getId());
     }
 }
 

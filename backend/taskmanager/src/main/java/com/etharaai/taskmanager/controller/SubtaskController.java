@@ -31,6 +31,16 @@ public class SubtaskController {
         return ResponseEntity.ok(subtaskService.getSubtaskById(subtaskId));
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<SubtaskDto>> getSubtasksByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(subtaskService.getSubtasksByUserId(userId));
+    }
+
+    @GetMapping("/my-subtasks")
+    public ResponseEntity<List<SubtaskDto>> getMySubtasks() {
+        return ResponseEntity.ok(subtaskService.getMySubtasks());
+    }
+
     @PatchMapping("/{subtaskId}/status")
     public ResponseEntity<SubtaskDto> updateSubtaskStatus(@PathVariable Long subtaskId, @RequestParam TaskStatus status) {
         return ResponseEntity.ok(subtaskService.updateSubtaskStatus(subtaskId, status));

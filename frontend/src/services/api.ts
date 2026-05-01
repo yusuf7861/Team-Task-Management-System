@@ -130,6 +130,8 @@ export const tasksApi = {
 
 export const subtasksApi = {
   getByTask: (taskId: number) => api.get<SubtaskDto[]>(`/subtasks/task/${taskId}`),
+  getByUser: (userId: number) => api.get<SubtaskDto[]>(`/subtasks/user/${userId}`),
+  getMySubtasks: () => api.get<SubtaskDto[]>('/subtasks/my-subtasks'),
   getById: (id: number) => api.get<SubtaskDto>(`/subtasks/${id}`),
   create: (taskId: number, data: Partial<SubtaskDto>) => api.post<SubtaskDto>(`/subtasks/task/${taskId}`, data),
   updateStatus: (id: number, status: TaskStatus) =>

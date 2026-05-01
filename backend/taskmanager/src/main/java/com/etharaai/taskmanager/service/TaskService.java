@@ -4,6 +4,7 @@ import com.etharaai.taskmanager.dto.TaskDto;
 import com.etharaai.taskmanager.entity.*;
 import com.etharaai.taskmanager.mapper.TaskMapper;
 import com.etharaai.taskmanager.repository.ProjectRepository;
+import com.etharaai.taskmanager.repository.SubtaskRepository;
 import com.etharaai.taskmanager.repository.TaskRepository;
 import com.etharaai.taskmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 public class TaskService {
 
     private final TaskRepository taskRepository;
+    private final SubtaskRepository subtaskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final TaskMapper taskMapper;
@@ -63,6 +65,7 @@ public class TaskService {
         Users currentUsers = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Get all tasks assigned to the current user
         return taskRepository.findByAssignedToId(currentUsers.getId()).stream()
                 .map(taskMapper::toDto)
                 .collect(Collectors.toList());
@@ -71,6 +74,11 @@ public class TaskService {
     public TaskDto updateTaskStatus(Long taskId, TaskStatus newStatus) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
+
+                if (newStatus == TaskStatus.DONE && task.getSubtasks() != null && task.getSubtasks().stream().anyMatch(subtask -> subtask.getStatus() != TaskStatus.DONE)) {
+                        throw new RuntimeException("Complete all subtasks before marking the task as done");
+                }
+
         task.setStatus(newStatus);
         Task updatedTask = taskRepository.save(task);
         return taskMapper.toDto(updatedTask);

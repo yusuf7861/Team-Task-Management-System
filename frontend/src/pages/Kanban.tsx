@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { tasksApi, type TaskDto, type TaskStatus } from '../services/api';
+import { tasksApi, subtasksApi, type TaskDto, type TaskStatus, type SubtaskDto } from '../services/api';
 
 const Kanban: React.FC = () => {
   const [tasks, setTasks] = useState<TaskDto[]>([]);
@@ -10,7 +10,18 @@ const Kanban: React.FC = () => {
     const fetchTasks = async () => {
       try {
         const { data } = await tasksApi.getMyTasks();
-        setTasks(data);
+        // Attempt to load subtasks for each task in parallel, but tolerate failures
+        const taskList: TaskDto[] = data;
+        const subtaskCalls = taskList.map((t) =>
+          subtasksApi.getByTask(t.id!).then((res) => ({ id: t.id, subtasks: res.data }))
+        );
+        const settled = await Promise.allSettled(subtaskCalls);
+        const withSubtasks = taskList.map((t) => {
+          const found = settled.find((s) => s.status === 'fulfilled' && (s as PromiseFulfilledResult<any>).value.id === t.id);
+          const subtasks: SubtaskDto[] = found ? (found as PromiseFulfilledResult<any>).value.subtasks : [];
+          return { ...t, subtasks } as TaskDto;
+        });
+        setTasks(withSubtasks);
       } catch (err) {
         console.error('Failed to load tasks', err);
       } finally {
@@ -84,6 +95,21 @@ const Kanban: React.FC = () => {
         </Link>
         {task.description && !isDone && (
           <p className="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">{task.description}</p>
+        )}
+        {/* Subtask summary */}
+        {task.subtasks && task.subtasks.length > 0 && (
+          <div className="mt-1">
+            <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+              <span className="font-label-caps text-label-caps">Subtasks:</span>
+              <span className="px-2 py-0.5 rounded-full bg-surface-variant">{task.subtasks.length}</span>
+              <span className="px-2 py-0.5 rounded-full bg-surface-variant">{task.subtasks.filter(s => s.status !== 'DONE').length} open</span>
+            </div>
+            <div className="mt-2 space-y-1">
+              {task.subtasks.slice(0,2).map((s) => (
+                <div key={s.id} className="text-[12px] text-on-surface-variant truncate">• {s.title} <span className="text-[11px] text-outline">({s.status})</span></div>
+              ))}
+            </div>
+          </div>
         )}
         <div className="flex justify-between items-center mt-2 pt-3 border-t border-surface-container-high">
           <div className={`flex items-center gap-xs font-label-caps text-label-caps ${isDone ? 'text-outline' : 'text-outline'}`}>

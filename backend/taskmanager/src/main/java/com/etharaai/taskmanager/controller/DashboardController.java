@@ -4,6 +4,7 @@ import com.etharaai.taskmanager.dto.DashboardStatsDto;
 import com.etharaai.taskmanager.entity.Role;
 import com.etharaai.taskmanager.entity.TaskStatus;
 import com.etharaai.taskmanager.entity.Users;
+import com.etharaai.taskmanager.repository.SubtaskRepository;
 import com.etharaai.taskmanager.repository.TaskRepository;
 import com.etharaai.taskmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import java.time.LocalDate;
 public class DashboardController {
 
     private final TaskRepository taskRepository;
+    private final SubtaskRepository subtaskRepository;
     private final UserRepository userRepository;
 
     @GetMapping("/stats")
@@ -41,11 +43,28 @@ public class DashboardController {
             overdueTasks = taskRepository.countByDueDateNotNullAndDueDateBeforeAndStatusNot(LocalDate.now(), TaskStatus.DONE);
         } else {
             Long userId = currentUsers.getId();
-            totalTasks = taskRepository.findByAssignedToId(userId).size();
-            completedTasks = taskRepository.countByAssignedToIdAndStatus(userId, TaskStatus.DONE);
-            pendingTasks = taskRepository.countByAssignedToIdAndStatus(userId, TaskStatus.TODO) + 
-                           taskRepository.countByAssignedToIdAndStatus(userId, TaskStatus.IN_PROGRESS);
-            overdueTasks = taskRepository.countByAssignedToIdAndDueDateNotNullAndDueDateBeforeAndStatusNot(userId, LocalDate.now(), TaskStatus.DONE);
+            // Count tasks assigned to user
+            long userTasks = taskRepository.findByAssignedToId(userId).size();
+            // Count subtasks assigned to user
+            long userSubtasks = subtaskRepository.findByAssignedToId(userId).size();
+            totalTasks = userTasks + userSubtasks;
+
+            // Count completed tasks and subtasks
+            long completedTaskCount = taskRepository.countByAssignedToIdAndStatus(userId, TaskStatus.DONE);
+            long completedSubtaskCount = subtaskRepository.countByAssignedToIdAndStatus(userId, TaskStatus.DONE);
+            completedTasks = completedTaskCount + completedSubtaskCount;
+
+            // Count pending tasks and subtasks
+            long pendingTaskCount = taskRepository.countByAssignedToIdAndStatus(userId, TaskStatus.TODO) +
+                                    taskRepository.countByAssignedToIdAndStatus(userId, TaskStatus.IN_PROGRESS);
+            long pendingSubtaskCount = subtaskRepository.countByAssignedToIdAndStatus(userId, TaskStatus.TODO) +
+                                       subtaskRepository.countByAssignedToIdAndStatus(userId, TaskStatus.IN_PROGRESS);
+            pendingTasks = pendingTaskCount + pendingSubtaskCount;
+
+            // Count overdue tasks and subtasks
+            long overdueTaskCount = taskRepository.countByAssignedToIdAndDueDateNotNullAndDueDateBeforeAndStatusNot(userId, LocalDate.now(), TaskStatus.DONE);
+            long overdueSubtaskCount = subtaskRepository.countByAssignedToIdAndDueDateNotNullAndDueDateBeforeAndStatusNot(userId, LocalDate.now(), TaskStatus.DONE);
+            overdueTasks = overdueTaskCount + overdueSubtaskCount;
         }
 
         DashboardStatsDto stats = new DashboardStatsDto(

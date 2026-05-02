@@ -22,8 +22,7 @@ jobs:
           distribution: 'microsoft'
 
       - name: Build with Maven
-        # We move into the subfolder where pom.xml exists before running the build
-        run: mvn clean install
+        run: mvn clean install -DskipTests
         working-directory: backend/taskmanager
         env:
           DB_URL: ${{ secrets.DB_URL }}

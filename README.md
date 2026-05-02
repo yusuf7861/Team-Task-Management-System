@@ -86,7 +86,7 @@ For evaluation purposes, you can use the following accounts:
 
 ### **Admin Account**
 - **Email**: `yjamal710@gmail.com`
-- **Password**: `yusuf@123`
+- **Password**: `QG1nQ0km`
 
 ### **Member Accounts**
 - **User 1**:

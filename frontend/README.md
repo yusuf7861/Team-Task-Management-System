@@ -86,15 +86,15 @@ For evaluation purposes, you can use the following accounts:
 
 ### **Admin Account**
 - **Email**: `yjamal710@gmail.com`
-- **Password**: `QG1nQ0km`
+- **Password**: `d8oZLmrR`
 
 ### **Member Accounts**
 - **User 1**:
-  - **Email**: `wasi.test@gmail.com`
-  - **Password**: `wasi@123`
+  - **Email**: `siddiqueraaj883@gmail.com`
+  - **Password**: `siddique@123`
 - **User 2**:
-  - **Email**: `vasikur.test@gmail.com`
-  - **Password**: `vasikur@123`
+  - **Email**: `johndoe@gmail.com`
+  - **Password**: `john@123`
 
 ## 🌐 Deployment
 

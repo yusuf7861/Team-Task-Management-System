@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { dashboardApi, tasksApi, subtasksApi, usersApi, type DashboardStats, type TaskDto, type SubtaskDto, type TaskStatus, type UserDto } from '../services/api';
+import { dashboardApi, tasksApi, subtasksApi, usersApi, getApiError, type DashboardStats, type TaskDto, type SubtaskDto, type TaskStatus, type UserDto } from '../services/api';
 
 
 
@@ -10,6 +10,7 @@ const MemberDashboard: React.FC = () => {
   const [mySubtasks, setMySubtasks] = useState<SubtaskDto[]>([]);
   const [teamMembers, setTeamMembers] = useState<UserDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [quickStatusError, setQuickStatusError] = useState('');
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -52,11 +53,13 @@ const MemberDashboard: React.FC = () => {
       setMyTasks((prev) =>
         prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
       );
+      setQuickStatusError('');
       // Refresh stats
       const { data } = await dashboardApi.getStats();
       setStats(data);
     } catch (err) {
       console.error('Failed to update status', err);
+      setQuickStatusError(getApiError(err));
     }
   };
 
@@ -189,6 +192,13 @@ const MemberDashboard: React.FC = () => {
              Full View <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
            </Link>
          </div>
+
+        {quickStatusError && (
+          <div className="flex items-center gap-2 p-3 bg-error-container text-on-error-container rounded-lg text-sm">
+            <span className="material-symbols-outlined text-[18px]">error</span>
+            <p>{quickStatusError}</p>
+          </div>
+        )}
 
         {myTasks.length === 0 ? (
           <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-xl text-center">

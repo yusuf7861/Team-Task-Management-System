@@ -32,6 +32,18 @@ api.interceptors.response.use(
   }
 );
 
+/** Extract a human-readable message from an Axios error response. */
+export function getApiError(err: unknown): string {
+  if (err && typeof err === 'object') {
+    const axiosErr = err as { response?: { data?: { message?: string; error?: string } }; message?: string };
+    const data = axiosErr.response?.data;
+    if (data?.message) return data.message;
+    if (data?.error) return data.error;
+    if (axiosErr.message) return axiosErr.message;
+  }
+  return 'An unexpected error occurred. Please try again.';
+}
+
 // ─── Auth ────────────────────────────────────────────────
 export interface AuthRequest {
   email: string;

@@ -85,7 +85,7 @@ public class SubtaskService {
     }
 
     public SubtaskDto updateSubtaskStatus(Long subtaskId, TaskStatus newStatus) {
-        Subtask subtask = subtaskRepository.findById(subtaskId)
+        Subtask subtask = subtaskRepository.findWithRelationsById(subtaskId)
                 .orElseThrow(() -> new RuntimeException("Subtask not found"));
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -111,7 +111,7 @@ public class SubtaskService {
     }
 
     public SubtaskDto getSubtaskById(Long subtaskId) {
-        Subtask subtask = subtaskRepository.findById(subtaskId)
+        Subtask subtask = subtaskRepository.findWithRelationsById(subtaskId)
                 .orElseThrow(() -> new RuntimeException("Subtask not found"));
         return subtaskMapper.toDto(subtask);
     }

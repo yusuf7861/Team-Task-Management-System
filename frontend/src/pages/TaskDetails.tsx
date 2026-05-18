@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { tasksApi, subtasksApi, type TaskDto, type TaskStatus } from '../services/api';
+import { tasksApi, subtasksApi, usersApi, getApiError, type TaskDto, type TaskStatus, type UserDto } from '../services/api';
 
 const statusConfig: Record<TaskStatus, { label: string; bg: string; text: string; dot: string }> = {
   TODO: { label: 'To Do', bg: 'bg-surface-container', text: 'text-on-surface-variant', dot: 'bg-outline' },
@@ -16,6 +16,20 @@ const TaskDetails: React.FC = () => {
   const [error, setError] = useState('');
   const [taskStatusError, setTaskStatusError] = useState('');
   const [subtaskStatusError, setSubtaskStatusError] = useState('');
+
+  // Create Subtask modal state
+  const [showCreateSubtask, setShowCreateSubtask] = useState(false);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [newSubtaskDesc, setNewSubtaskDesc] = useState('');
+  const [newSubtaskAssigneeId, setNewSubtaskAssigneeId] = useState<number | ''>('');
+  const [newSubtaskDueDate, setNewSubtaskDueDate] = useState('');
+  const [creatingSubtask, setCreatingSubtask] = useState(false);
+  const [createSubtaskError, setCreateSubtaskError] = useState('');
+  const [users, setUsers] = useState<UserDto[]>([]);
+
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = currentUser.role === 'ADMIN';
+
   useEffect(() => {
     const fetchTask = async () => {
       try {
@@ -35,6 +49,12 @@ const TaskDetails: React.FC = () => {
     fetchTask();
   }, [id]);
 
+  useEffect(() => {
+    if (isAdmin) {
+      usersApi.getAll().then((r) => setUsers(r.data)).catch(() => {});
+    }
+  }, [isAdmin]);
+
   const handleStatusChange = async (newStatus: TaskStatus) => {
     if (!task?.id) return;
 
@@ -49,7 +69,7 @@ const TaskDetails: React.FC = () => {
       setTaskStatusError('');
     } catch (err) {
       console.error('Failed to update status', err);
-      setTaskStatusError('Unable to update task status right now.');
+      setTaskStatusError(getApiError(err));
     }
   };
 
@@ -66,9 +86,40 @@ const TaskDetails: React.FC = () => {
       setSubtaskStatusError('');
     } catch (err) {
       console.error('Failed to update subtask status', err);
-      setSubtaskStatusError('You can only update subtasks assigned to you or created by you.');
+      setSubtaskStatusError(getApiError(err));
     }
   };
+
+  const handleCreateSubtask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!task?.id) return;
+    setCreatingSubtask(true);
+    setCreateSubtaskError('');
+    try {
+      const { data: newSub } = await subtasksApi.create(task.id, {
+        title: newSubtaskTitle,
+        description: newSubtaskDesc || undefined,
+        assignedToId: newSubtaskAssigneeId || null,
+        dueDate: newSubtaskDueDate || null,
+        status: 'TODO',
+      });
+      setTask((prev) => {
+        if (!prev) return prev;
+        return { ...prev, subtasks: [...(prev.subtasks ?? []), newSub] };
+      });
+      setShowCreateSubtask(false);
+      setNewSubtaskTitle('');
+      setNewSubtaskDesc('');
+      setNewSubtaskAssigneeId('');
+      setNewSubtaskDueDate('');
+    } catch (err) {
+      console.error('Failed to create subtask', err);
+      setCreateSubtaskError(getApiError(err));
+    } finally {
+      setCreatingSubtask(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -120,22 +171,18 @@ const TaskDetails: React.FC = () => {
               {task.title}
             </h1>
             
-            <div className="flex items-center gap-2 text-sm text-outline">
-              <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                <span className="material-symbols-outlined text-[18px]">attachment</span>
-                Attach
-              </button>
-              <span className="opacity-30">|</span>
-              <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                <span className="material-symbols-outlined text-[18px]">account_tree</span>
-                Create Subtask
-              </button>
-              <span className="opacity-30">|</span>
-              <button className="flex items-center gap-1 hover:text-primary transition-colors">
-                <span className="material-symbols-outlined text-[18px]">link</span>
-                Link issue
-              </button>
-            </div>
+            {isAdmin && (
+              <div className="flex items-center gap-2 text-sm text-outline">
+                <button
+                  id="create-subtask-btn"
+                  onClick={() => setShowCreateSubtask(true)}
+                  className="flex items-center gap-1 hover:text-primary transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">add_task</span>
+                  Create Subtask
+                </button>
+              </div>
+            )}
           </div>
 
           {taskStatusError && (
@@ -158,47 +205,71 @@ const TaskDetails: React.FC = () => {
           </div>
 
           {/* Subtasks Section */}
-          {task.subtasks && task.subtasks.length > 0 && (
+          {(task.subtasks && task.subtasks.length > 0) || isAdmin ? (
             <div className="space-y-3 pt-4">
-              <h3 className="font-medium text-on-background text-base flex items-center gap-2">
-                Subtasks
-                <span className="bg-surface-container text-on-surface text-xs px-2 py-0.5 rounded-full">{task.subtasks.length}</span>
-              </h3>
-              
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium text-on-background text-base flex items-center gap-2">
+                  Subtasks
+                  {task.subtasks && task.subtasks.length > 0 && (
+                    <span className="bg-surface-container text-on-surface text-xs px-2 py-0.5 rounded-full">{task.subtasks.length}</span>
+                  )}
+                </h3>
+                {isAdmin && (
+                  <button
+                    onClick={() => setShowCreateSubtask(true)}
+                    className="text-xs text-primary font-medium hover:underline flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">add</span>
+                    Add
+                  </button>
+                )}
+              </div>
+
               {subtaskStatusError && (
                 <div className="p-2 bg-error-container text-on-error-container rounded-md text-sm flex items-center gap-2">
                   <span className="material-symbols-outlined text-[16px]">error</span>
                   {subtaskStatusError}
                 </div>
               )}
-              
-              <div className="border border-outline-variant rounded-md divide-y divide-outline-variant">
-                {task.subtasks.map((sub) => {
-                  const subStatus = statusConfig[sub.status];
-                  return (
-                    <div key={sub.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-surface-container/30 transition-colors gap-3">
-                      <div className="min-w-0">
-                        <h5 className="font-medium text-sm text-on-background truncate">
-                          {sub.title}
-                        </h5>
+
+              {task.subtasks && task.subtasks.length > 0 ? (
+                <div className="border border-outline-variant rounded-md divide-y divide-outline-variant">
+                  {task.subtasks.map((sub) => {
+                    const subStatus = statusConfig[sub.status];
+                    return (
+                      <div key={sub.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-surface-container/30 transition-colors gap-3">
+                        <div className="min-w-0">
+                          <h5 className="font-medium text-sm text-on-background truncate">{sub.title}</h5>
+                          {sub.assignedToName && (
+                            <p className="text-xs text-outline mt-0.5">{sub.assignedToName}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <select
+                            value={sub.status}
+                            onChange={(e) => handleSubtaskStatusChange(sub.id, e.target.value as TaskStatus)}
+                            className={`text-xs font-medium rounded-md px-2 py-1 border-none cursor-pointer focus:ring-2 focus:ring-primary/20 ${subStatus.bg} ${subStatus.text}`}
+                          >
+                            <option value="TODO">To Do</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="DONE">Done</option>
+                          </select>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 shrink-0">
-                        <select
-                          value={sub.status}
-                          onChange={(e) => handleSubtaskStatusChange(sub.id, e.target.value as TaskStatus)}
-                          className={`text-xs font-medium rounded-md px-2 py-1 border-none cursor-pointer focus:ring-2 focus:ring-primary/20 ${subStatus.bg} ${subStatus.text}`}
-                        >
-                          <option value="TODO">To Do</option>
-                          <option value="IN_PROGRESS">In Progress</option>
-                          <option value="DONE">Done</option>
-                        </select>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-6 border border-dashed border-outline-variant rounded-md">
+                  <span className="material-symbols-outlined text-[28px] text-outline opacity-40 block mb-1">checklist</span>
+                  <p className="text-sm text-outline">No subtasks yet</p>
+                  {isAdmin && (
+                    <button onClick={() => setShowCreateSubtask(true)} className="mt-2 text-sm text-primary hover:underline">Create the first subtask</button>
+                  )}
+                </div>
+              )}
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Sidebar */}
@@ -284,6 +355,91 @@ const TaskDetails: React.FC = () => {
           </div>
         </aside>
       </div>
+
+      {/* ── Create Subtask Modal ── */}
+      {showCreateSubtask && (
+        <div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-4" onClick={() => setShowCreateSubtask(false)}>
+          <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-on-background mb-4">Create Subtask</h2>
+            <form onSubmit={handleCreateSubtask} className="space-y-4">
+              {createSubtaskError && (
+                <div className="flex items-center gap-2 p-3 bg-error-container text-on-error-container rounded-lg text-sm">
+                  <span className="material-symbols-outlined text-[18px]">error</span>
+                  <p>{createSubtaskError}</p>
+                </div>
+              )}
+              <div>
+                <label className="block text-xs font-semibold text-on-surface uppercase tracking-wider mb-1">Title *</label>
+                <input
+                  id="subtask-title"
+                  className="block w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                  placeholder="e.g. Write unit tests"
+                  value={newSubtaskTitle}
+                  onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-on-surface uppercase tracking-wider mb-1">Description</label>
+                <textarea
+                  id="subtask-desc"
+                  className="block w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none h-20"
+                  placeholder="Optional details..."
+                  value={newSubtaskDesc}
+                  onChange={(e) => setNewSubtaskDesc(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-on-surface uppercase tracking-wider mb-1">Assign To</label>
+                  <select
+                    id="subtask-assignee"
+                    className="block w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary transition-colors"
+                    value={newSubtaskAssigneeId}
+                    onChange={(e) => setNewSubtaskAssigneeId(e.target.value ? Number(e.target.value) : '')}
+                  >
+                    <option value="">Unassigned</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-on-surface uppercase tracking-wider mb-1">Due Date</label>
+                  <input
+                    id="subtask-due-date"
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
+                    max={task?.dueDate ?? undefined}
+                    className="block w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded-lg text-sm text-on-surface focus:border-primary transition-colors"
+                    value={newSubtaskDueDate}
+                    onChange={(e) => setNewSubtaskDueDate(e.target.value)}
+                  />
+                  {task?.dueDate && (
+                    <p className="text-xs text-outline mt-1">Must be on or before {new Date(task.dueDate).toLocaleDateString()}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => { setShowCreateSubtask(false); setCreateSubtaskError(''); }}
+                  className="text-sm text-on-surface-variant hover:text-on-surface px-4 py-2 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingSubtask}
+                  className="bg-primary text-on-primary text-sm font-medium px-4 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
+                >
+                  {creatingSubtask ? 'Creating...' : 'Create Subtask'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

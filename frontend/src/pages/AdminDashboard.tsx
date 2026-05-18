@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { dashboardApi, tasksApi, subtasksApi, projectsApi, usersApi, type DashboardStats, type TaskDto, type SubtaskDto, type ProjectDto, type UserDto } from '../services/api';
+import { dashboardApi, tasksApi, subtasksApi, projectsApi, usersApi, getApiError, type DashboardStats, type TaskDto, type SubtaskDto, type ProjectDto, type UserDto } from '../services/api';
 
 const statusBadge = (status: string) => {
   switch (status) {
@@ -53,6 +53,11 @@ const AdminDashboard: React.FC = () => {
   const [newSubtaskAssigneeId, setNewSubtaskAssigneeId] = useState<number | ''>('');
   const [newSubtaskDueDate, setNewSubtaskDueDate] = useState('');
   const [creatingSubtask, setCreatingSubtask] = useState(false);
+
+  // Error states
+  const [projectError, setProjectError] = useState('');
+  const [taskError, setTaskError] = useState('');
+  const [subtaskError, setSubtaskError] = useState('');
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -127,6 +132,7 @@ const AdminDashboard: React.FC = () => {
       await fetchAll();
     } catch (err) {
       console.error('Failed to create subtask', err);
+      setSubtaskError(getApiError(err));
     } finally {
       setCreatingSubtask(false);
     }
@@ -143,6 +149,7 @@ const AdminDashboard: React.FC = () => {
       fetchAll();
     } catch (err) {
       console.error('Failed to create project', err);
+      setProjectError(getApiError(err));
     } finally {
       setCreating(false);
     }
@@ -189,6 +196,7 @@ const AdminDashboard: React.FC = () => {
       await fetchAll();
     } catch (err) {
       console.error('Failed to create task', err);
+      setTaskError(getApiError(err));
     } finally {
       setCreatingTask(false);
     }
@@ -465,6 +473,12 @@ const AdminDashboard: React.FC = () => {
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-md p-xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-h2 text-h2 text-on-background mb-lg">Create Project</h2>
             <form onSubmit={handleCreateProject} className="space-y-lg">
+              {projectError && (
+                <div className="flex items-center gap-2 p-3 bg-error-container text-on-error-container rounded-lg text-sm">
+                  <span className="material-symbols-outlined text-[18px]">error</span>
+                  <p>{projectError}</p>
+                </div>
+              )}
               <div className="space-y-sm">
                 <label className="block font-label-caps text-label-caps text-on-surface uppercase">Project Name</label>
                 <input
@@ -501,6 +515,12 @@ const AdminDashboard: React.FC = () => {
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-lg p-xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-h2 text-h2 text-on-background mb-lg">Assign New Task</h2>
             <form onSubmit={handleCreateTask} className="space-y-lg">
+              {taskError && (
+                <div className="flex items-center gap-2 p-3 bg-error-container text-on-error-container rounded-lg text-sm">
+                  <span className="material-symbols-outlined text-[18px]">error</span>
+                  <p>{taskError}</p>
+                </div>
+              )}
               <div className="space-y-sm">
                 <label className="block font-label-caps text-label-caps text-on-surface uppercase">Task Title</label>
                 <input
@@ -619,6 +639,12 @@ const AdminDashboard: React.FC = () => {
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-xl w-full max-w-lg p-xl max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <h2 className="font-h2 text-h2 text-on-background mb-lg">Create Subtask</h2>
             <form onSubmit={handleCreateSubtask} className="space-y-lg">
+              {subtaskError && (
+                <div className="flex items-center gap-2 p-3 bg-error-container text-on-error-container rounded-lg text-sm">
+                  <span className="material-symbols-outlined text-[18px]">error</span>
+                  <p>{subtaskError}</p>
+                </div>
+              )}
               <div className="space-y-sm">
                 <label className="block font-label-caps text-label-caps text-on-surface uppercase">Subtask Title</label>
                 <input

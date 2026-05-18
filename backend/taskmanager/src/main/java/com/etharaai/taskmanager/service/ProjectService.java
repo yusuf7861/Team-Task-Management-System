@@ -40,13 +40,13 @@ public class ProjectService {
     }
 
     public List<ProjectDto> getAllProjects() {
-        return projectRepository.findAll().stream()
+        return projectRepository.findAllWithCreatedBy().stream()
                 .map(projectMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public ProjectDto getProjectById(Long id) {
-        Project project = projectRepository.findById(id)
+        Project project = projectRepository.findByIdWithCreatedBy(id)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
         return projectMapper.toDto(project);
     }

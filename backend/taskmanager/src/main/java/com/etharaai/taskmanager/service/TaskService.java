@@ -82,18 +82,23 @@ public class TaskService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         Users currentUsers = userRepository.findByEmail(email)
-        .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        Task task = taskRepository.findById(taskId)
-        .orElseThrow(() -> new RuntimeException("Task not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if(currentUsers.getId() != task.getAssignedTo().getId()){
-                throw new RuntimeException("You are not authorized to update this task");
+        Task task = taskRepository.findWithSubtasksById(taskId)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        boolean isAdmin = currentUsers.getRole() == Role.ADMIN;
+        boolean isAssignee = task.getAssignedTo() != null
+                && task.getAssignedTo().getId().equals(currentUsers.getId());
+
+        if (!isAdmin && !isAssignee) {
+            throw new RuntimeException("You are not authorized to update this task");
         }
 
-                if (newStatus == TaskStatus.DONE && task.getSubtasks() != null && task.getSubtasks().stream().anyMatch(subtask -> subtask.getStatus() != TaskStatus.DONE)) {
-                        throw new RuntimeException("Complete all subtasks before marking the task as done");
-                }
+        if (newStatus == TaskStatus.DONE && task.getSubtasks() != null
+                && task.getSubtasks().stream().anyMatch(subtask -> subtask.getStatus() != TaskStatus.DONE)) {
+            throw new RuntimeException("Complete all subtasks before marking the task as done");
+        }
 
         task.setStatus(newStatus);
         Task updatedTask = taskRepository.save(task);

@@ -9,8 +9,10 @@ import com.etharaai.taskmanager.repository.TaskRepository;
 import com.etharaai.taskmanager.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -56,26 +58,38 @@ public class TaskService {
 
 
 
+    @Transactional(readOnly = true)
     public List<TaskDto> getTasksByProjectId(Long projectId) {
-        return taskRepository.findByProjectId(projectId).stream()
+        // use repository method that eagerly fetches subtasks to avoid lazy-loading issues
+        return taskRepository.findWithSubtasksByProjectId(projectId).stream()
                 .map(taskMapper::toDto)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<TaskDto> getMyTasks() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Users currentUsers = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Get all tasks assigned to the current user
-        return taskRepository.findByAssignedToId(currentUsers.getId()).stream()
+        // Get all tasks assigned to the current user (including subtasks)
+        return taskRepository.findWithSubtasksByAssignedToId(currentUsers.getId()).stream()
                 .map(taskMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public TaskDto updateTaskStatus(Long taskId, TaskStatus newStatus) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        Users currentUsers = userRepository.findByEmail(email)
+        .orElseThrow(() -> new RuntimeException("User not found"));
+        
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found"));
+        .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        if(currentUsers.getId() != task.getAssignedTo().getId()){
+                throw new RuntimeException("You are not authorized to update this task");
+        }
 
                 if (newStatus == TaskStatus.DONE && task.getSubtasks() != null && task.getSubtasks().stream().anyMatch(subtask -> subtask.getStatus() != TaskStatus.DONE)) {
                         throw new RuntimeException("Complete all subtasks before marking the task as done");
@@ -93,8 +107,9 @@ public class TaskService {
         taskRepository.delete(task);
     }
 
+    @Transactional(readOnly = true)
     public TaskDto getTaskWithSubtasks(Long taskId) {
-        Task task = taskRepository.findById(taskId)
+        Task task = taskRepository.findWithSubtasksById(taskId)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
         return taskMapper.toDto(task);
     }

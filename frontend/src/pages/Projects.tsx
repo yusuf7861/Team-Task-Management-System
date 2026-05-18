@@ -88,10 +88,10 @@ const Projects: React.FC = () => {
   }
 
   const projectColors = [
-    { bg: 'bg-primary-fixed', text: 'text-primary', icon: 'rocket_launch' },
-    { bg: 'bg-secondary-fixed', text: 'text-secondary', icon: 'campaign' },
-    { bg: 'bg-tertiary-fixed', text: 'text-tertiary', icon: 'design_services' },
-    { bg: 'bg-error-container', text: 'text-error', icon: 'code' },
+    { bg: 'bg-primary-fixed', text: 'text-primary', solidBg: 'bg-primary', icon: 'rocket_launch' },
+    { bg: 'bg-secondary-fixed', text: 'text-secondary', solidBg: 'bg-secondary', icon: 'campaign' },
+    { bg: 'bg-tertiary-fixed', text: 'text-tertiary', solidBg: 'bg-tertiary', icon: 'design_services' },
+    { bg: 'bg-error-container', text: 'text-error', solidBg: 'bg-error', icon: 'code' },
   ];
 
   if (selectedProject) {
@@ -311,7 +311,7 @@ const Projects: React.FC = () => {
                     <span className="font-label-caps text-label-caps text-on-surface-variant">{progress}%</span>
                   </div>
                   <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
-                    <div className={`${color.bg} h-full rounded-full transition-all duration-500`} style={{ width: `${progress}%` }}></div>
+                    <div className={`${color.solidBg} h-full rounded-full transition-all duration-500`} style={{ width: `${progress}%` }}></div>
                   </div>
                 </div>
 

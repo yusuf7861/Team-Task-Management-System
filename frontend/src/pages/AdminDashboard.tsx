@@ -406,8 +406,8 @@ const AdminDashboard: React.FC = () => {
                     </tr>
                   );
 
-                  if (expandedTasks[task.id!] && subtasksMap[task.id!]) {
-                    const subs = subtasksMap[task.id!]!;
+                  if (expandedTasks[task.id!]) {
+                    const subs = subtasksMap[task.id!] ?? task.subtasks ?? [];
                     if (subs.length === 0) {
                       rows.push(
                         <tr key={`${task.id}-empty`} className="bg-surface-container p-2">

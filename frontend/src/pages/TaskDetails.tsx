@@ -100,219 +100,187 @@ const TaskDetails: React.FC = () => {
   const canMarkTaskDone = !task.subtasks || task.subtasks.every((subtask) => subtask.status === 'DONE');
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
+    <div className="w-full h-full px-6 py-6 animate-in fade-in duration-300">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-outline mb-8 font-body-sm overflow-x-auto whitespace-nowrap pb-2">
+      <nav className="flex items-center gap-2 text-outline mb-4 text-sm">
         <Link className="hover:text-primary transition-colors flex items-center gap-1" to="/app/projects">
-          <span className="material-symbols-outlined text-[18px]">folder</span>
           Projects
         </Link>
-        <span className="material-symbols-outlined text-[16px] opacity-40">chevron_right</span>
-        <span className="hover:text-primary transition-colors cursor-pointer">{task.projectName || 'Project'}</span>
-        <span className="material-symbols-outlined text-[16px] opacity-40">chevron_right</span>
-        <span className="text-on-background font-medium">ETH-{String(task.id).padStart(3, '0')}</span>
+        <span className="material-symbols-outlined text-[16px] opacity-50">chevron_right</span>
+        <span className="hover:text-primary transition-colors cursor-pointer">{task.projectName || 'Unassigned Project'}</span>
+        <span className="material-symbols-outlined text-[16px] opacity-50">chevron_right</span>
+        <span className="text-on-background font-medium">#{task.id}</span>
       </nav>
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Main Content Area */}
         <div className="flex-1 space-y-6">
-          {/* Task Title & Header */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 sm:p-8 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-3">
-                <span className="font-label-caps text-label-caps bg-secondary-container text-secondary px-3 py-1 rounded-full font-bold">
-                  ETH-{String(task.id).padStart(3, '0')}
-                </span>
-                <span className="text-outline font-body-sm">•</span>
-                <span className="text-outline font-body-sm flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[16px]">schedule</span>
-                  Created {task.createdAt ? new Date(task.createdAt).toLocaleDateString() : '—'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button className="w-9 h-9 flex items-center justify-center text-outline hover:text-primary hover:bg-primary/5 rounded-full transition-all">
-                  <span className="material-symbols-outlined text-[20px]">share</span>
-                </button>
-                <button className="w-9 h-9 flex items-center justify-center text-outline hover:text-primary hover:bg-primary/5 rounded-full transition-all">
-                  <span className="material-symbols-outlined text-[20px]">more_horiz</span>
-                </button>
-              </div>
-            </div>
-
-            <h1 className="font-h1 text-h2 sm:text-h1 text-on-background leading-tight mb-8">
+          <div className="space-y-4">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-on-background leading-tight">
               {task.title}
             </h1>
-
-            <div className="flex flex-wrap items-center gap-6 pt-6 border-t border-outline-variant">
-              <div className="space-y-1.5">
-                <label className="font-label-caps text-label-caps text-outline block">Status</label>
-                <div className="relative group">
-                  <div className={`flex items-center gap-2 ${status.bg} ${status.text} px-4 py-2 rounded-xl border border-current/10 font-button cursor-pointer hover:shadow-md transition-all`}>
-                    <div className={`w-2.5 h-2.5 rounded-full ${status.dot}`}></div>
-                    {status.label}
-                    <span className="material-symbols-outlined text-[18px]">expand_more</span>
-                  </div>
-                  <div className="absolute top-full left-0 mt-2 bg-white border border-outline-variant rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 min-w-[180px] p-1">
-                    {(Object.keys(statusConfig) as TaskStatus[]).map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => handleStatusChange(s)}
-                        disabled={s === 'DONE' && !canMarkTaskDone}
-                        className={`w-full text-left px-3 py-2.5 font-body-sm rounded-lg hover:bg-surface-container flex items-center gap-3 transition-colors ${task.status === s ? 'bg-primary/5 font-bold text-primary' : ''} ${s === 'DONE' && !canMarkTaskDone ? 'opacity-40 cursor-not-allowed' : ''}`}
-                      >
-                        <div className={`w-2.5 h-2.5 rounded-full ${statusConfig[s].dot}`}></div>
-                        {statusConfig[s].label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            
+            <div className="flex items-center gap-2 text-sm text-outline">
+              <button className="flex items-center gap-1 hover:text-primary transition-colors">
+                <span className="material-symbols-outlined text-[18px]">attachment</span>
+                Attach
+              </button>
+              <span className="opacity-30">|</span>
+              <button className="flex items-center gap-1 hover:text-primary transition-colors">
+                <span className="material-symbols-outlined text-[18px]">account_tree</span>
+                Create Subtask
+              </button>
+              <span className="opacity-30">|</span>
+              <button className="flex items-center gap-1 hover:text-primary transition-colors">
+                <span className="material-symbols-outlined text-[18px]">link</span>
+                Link issue
+              </button>
             </div>
-
-            {taskStatusError && (
-              <div className="mt-4 p-3 bg-error-container text-on-error-container rounded-xl flex items-center gap-3 animate-in slide-in-from-top-2">
-                <span className="material-symbols-outlined text-[20px]">error</span>
-                <p className="text-sm">{taskStatusError}</p>
-              </div>
-            )}
           </div>
 
-          {/* Description Section */}
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 sm:p-8 shadow-sm">
-            <h3 className="font-h3 text-h3 text-on-background mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">description</span>
-              Description
-            </h3>
-            <div className="prose prose-blue max-w-none text-on-surface-variant font-body-md leading-relaxed">
+          {taskStatusError && (
+            <div className="p-3 bg-error-container text-on-error-container rounded-md flex items-center gap-2 text-sm">
+              <span className="material-symbols-outlined text-[18px]">error</span>
+              <p>{taskStatusError}</p>
+            </div>
+          )}
+
+          {/* Description */}
+          <div className="space-y-2">
+            <h3 className="font-medium text-on-background text-base">Description</h3>
+            <div className="text-on-surface-variant text-sm leading-relaxed whitespace-pre-wrap">
               {task.description ? (
                 <p>{task.description}</p>
               ) : (
-                <p className="text-outline italic">No description provided.</p>
+                <p className="text-outline italic">No description provided. Click to add one...</p>
               )}
             </div>
-
-            {/* Subtasks Section */}
-            {task.subtasks && task.subtasks.length > 0 && (
-              <div className="mt-12 pt-8 border-t border-outline-variant">
-                <div className="flex items-center justify-between mb-6">
-                  <h4 className="font-h3 text-h3 text-on-background flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary">checklist</span>
-                    Subtasks
-                    <span className="text-outline font-body-sm bg-surface-container px-2 py-0.5 rounded-full">{task.subtasks.length}</span>
-                  </h4>
-                </div>
-                {subtaskStatusError && (
-                  <div className="mb-4 p-3 bg-error-container text-on-error-container rounded-lg text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-                    <span className="material-symbols-outlined text-[18px]">error</span>
-                    {subtaskStatusError}
-                  </div>
-                )}
-                <div className="space-y-4">
-                  {task.subtasks.map((sub) => {
-                    const subStatus = statusConfig[sub.status];
-                    return (
-                      <div key={sub.id} className="bg-background border border-outline-variant rounded-xl p-5 hover:border-primary/30 transition-all group">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                          <div className="space-y-1">
-                            <h5 className="font-button text-on-background group-hover:text-primary transition-colors">
-                              {sub.title}
-                            </h5>
-                            {sub.description && (
-                              <p className="text-on-surface-variant text-sm line-clamp-1">{sub.description}</p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 self-end sm:self-auto">
-                            <div className={`flex items-center gap-1.5 ${subStatus.bg} ${subStatus.text} px-2.5 py-1 rounded-full text-[11px] font-label-caps border border-current/10`}>
-                              <div className={`w-1.5 h-1.5 rounded-full ${subStatus.dot}`}></div>
-                              {subStatus.label}
-                            </div>
-                            <select
-                              value={sub.status}
-                              onChange={(e) => handleSubtaskStatusChange(sub.id, e.target.value as TaskStatus)}
-                              className="bg-surface-container border-none rounded-lg px-2 py-1 text-[12px] font-medium text-on-surface focus:ring-2 focus:ring-primary/20 cursor-pointer"
-                            >
-                              <option value="TODO">To Do</option>
-                              <option value="IN_PROGRESS">In Progress</option>
-                              <option value="DONE">Done</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Subtasks Section */}
+          {task.subtasks && task.subtasks.length > 0 && (
+            <div className="space-y-3 pt-4">
+              <h3 className="font-medium text-on-background text-base flex items-center gap-2">
+                Subtasks
+                <span className="bg-surface-container text-on-surface text-xs px-2 py-0.5 rounded-full">{task.subtasks.length}</span>
+              </h3>
+              
+              {subtaskStatusError && (
+                <div className="p-2 bg-error-container text-on-error-container rounded-md text-sm flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px]">error</span>
+                  {subtaskStatusError}
+                </div>
+              )}
+              
+              <div className="border border-outline-variant rounded-md divide-y divide-outline-variant">
+                {task.subtasks.map((sub) => {
+                  const subStatus = statusConfig[sub.status];
+                  return (
+                    <div key={sub.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 hover:bg-surface-container/30 transition-colors gap-3">
+                      <div className="min-w-0">
+                        <h5 className="font-medium text-sm text-on-background truncate">
+                          {sub.title}
+                        </h5>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <select
+                          value={sub.status}
+                          onChange={(e) => handleSubtaskStatusChange(sub.id, e.target.value as TaskStatus)}
+                          className={`text-xs font-medium rounded-md px-2 py-1 border-none cursor-pointer focus:ring-2 focus:ring-primary/20 ${subStatus.bg} ${subStatus.text}`}
+                        >
+                          <option value="TODO">To Do</option>
+                          <option value="IN_PROGRESS">In Progress</option>
+                          <option value="DONE">Done</option>
+                        </select>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Sidebar Metadata */}
-        <aside className="w-full lg:w-80 space-y-6">
-          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-6 shadow-sm sticky top-8">
-            <h4 className="font-label-caps text-label-caps text-outline mb-6 uppercase tracking-widest">Properties</h4>
+        {/* Sidebar */}
+        <aside className="w-full lg:w-72 space-y-6">
+          {/* Status Dropdown */}
+          <div className="space-y-1">
+            <div className="relative group">
+              <button className={`w-full flex items-center justify-between gap-2 ${status.bg} ${status.text} px-3 py-1.5 rounded-md text-sm font-medium border border-current/10 hover:shadow-sm transition-all`}>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${status.dot}`}></div>
+                  {status.label}
+                </div>
+                <span className="material-symbols-outlined text-[18px]">expand_more</span>
+              </button>
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-outline-variant rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 py-1">
+                {(Object.keys(statusConfig) as TaskStatus[]).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => handleStatusChange(s)}
+                    disabled={s === 'DONE' && !canMarkTaskDone}
+                    className={`w-full text-left px-3 py-1.5 text-sm hover:bg-surface-container flex items-center gap-2 transition-colors ${task.status === s ? 'bg-primary/5 font-medium text-primary' : 'text-on-surface'} ${s === 'DONE' && !canMarkTaskDone ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  >
+                    <div className={`w-2 h-2 rounded-full ${statusConfig[s].dot}`}></div>
+                    {statusConfig[s].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
 
-            <div className="space-y-6">
+          <div className="border border-outline-variant rounded-md overflow-hidden">
+            <div className="px-4 py-3 bg-surface-container-lowest border-b border-outline-variant">
+              <h4 className="text-xs font-semibold text-on-surface uppercase tracking-wider">Details</h4>
+            </div>
+            
+            <div className="p-4 space-y-4">
               {/* Assignee */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-outline uppercase tracking-wider block">Assignee</label>
-                <div className="flex items-center gap-3 p-2 rounded-xl bg-surface-container/50">
-                  <div className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-outline w-24">Assignee</span>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-medium shrink-0">
                     {(task.assignedToName || '?').charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-button text-on-background truncate">{task.assignedToName || 'Unassigned'}</div>
-                    <div className="text-[10px] text-outline truncate">{task.assignedToId ? 'Member' : 'No assignee'}</div>
-                  </div>
+                  <span className="text-sm font-medium text-on-background truncate">
+                    {task.assignedToName || 'Unassigned'}
+                  </span>
                 </div>
               </div>
 
               {/* Reporter */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-outline uppercase tracking-wider block">Reporter</label>
-                <div className="flex items-center gap-3 p-2 rounded-xl bg-surface-container/30">
-                  <div className="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-outline w-24">Reporter</span>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <div className="w-6 h-6 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center text-xs font-medium shrink-0">
                     {(task.createdByName || '?').charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-button text-on-background truncate">{task.createdByName || 'Unknown'}</div>
-                    <div className="text-[10px] text-outline truncate">Reporter</div>
-                  </div>
+                  <span className="text-sm font-medium text-on-background truncate">
+                    {task.createdByName || 'Unknown'}
+                  </span>
                 </div>
               </div>
 
-              <hr className="border-outline-variant opacity-50" />
+              {/* Project */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-outline w-24">Project</span>
+                <span className="text-sm text-primary hover:underline cursor-pointer truncate flex-1 text-left">
+                  {task.projectName || '—'}
+                </span>
+              </div>
 
-              {/* Details List */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] text-outline flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">calendar_today</span>
-                    Due Date
-                  </span>
-                  <span className="font-button text-on-background text-[13px]">
-                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] text-outline flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">rocket_launch</span>
-                    Project
-                  </span>
-                  <span className="font-button text-primary text-[13px] hover:underline cursor-pointer">
-                    {task.projectName || '—'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] text-outline flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[18px]">history</span>
-                    Last Updated
-                  </span>
-                  <span className="font-button text-on-background text-[13px]">
-                    {task.createdAt ? new Date(task.createdAt).toLocaleDateString() : '—'}
-                  </span>
-                </div>
+              {/* Due Date */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-outline w-24">Due Date</span>
+                <span className="text-sm text-on-background truncate flex-1 text-left">
+                  {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'None'}
+                </span>
               </div>
             </div>
+          </div>
+
+          <div className="text-xs text-outline space-y-1 pt-2">
+            <div>Created {task.createdAt ? new Date(task.createdAt).toLocaleString() : '—'}</div>
           </div>
         </aside>
       </div>

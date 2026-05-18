@@ -57,7 +57,7 @@ public class AdminInitializer implements CommandLineRunner {
                     mimeMessage.setText(text);
                 });
 
-                log.info("Admin account created and email sent to {}, password: {}", adminEmail, randomPassword);
+                log.info("Admin account created and email sent to {}", adminEmail);
             } catch (Exception e) {
                 log.error("Failed to send admin credentials email: {}", e.getMessage());
                 log.info("Admin account created with email: {} and password: {}", adminEmail, randomPassword);

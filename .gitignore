@@ -79,3 +79,5 @@ hs_err_pid*
 .npm
 .eslintcache
 node_modules/
+
+seed.py

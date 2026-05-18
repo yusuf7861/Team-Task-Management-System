@@ -38,6 +38,12 @@ public class SubtaskService {
                     .orElseThrow(() -> new RuntimeException("Assignee not found"));
         }
 
+        if (subtaskDto.dueDate() != null && task.getDueDate() != null) {
+            if (subtaskDto.dueDate().isAfter(task.getDueDate())) {
+                throw new RuntimeException("Subtask due date cannot be after the parent task due date");
+            }
+        }
+
         Subtask subtask = Subtask.builder()
                 .title(subtaskDto.title())
                 .description(subtaskDto.description())

@@ -181,14 +181,14 @@ const MemberDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Quick Status Update Section */}
-      <section className="flex flex-col gap-md">
-        <div className="flex justify-between items-center border-b border-outline-variant pb-2">
-          <h3 className="font-h3 text-h3 text-on-background">My Tasks</h3>
-          <Link to="/app/tasks" className="font-button text-button text-primary hover:text-on-primary-fixed-variant transition-colors flex items-center gap-1">
-            Kanban View <span className="material-symbols-outlined text-[16px]">view_kanban</span>
-          </Link>
-        </div>
+       {/* Quick Status Update Section */}
+       <section className="flex flex-col gap-md">
+         <div className="flex justify-between items-center border-b border-outline-variant pb-2">
+           <h3 className="font-h3 text-h3 text-on-background">My Tasks</h3>
+           <Link to="/app/tasks" className="font-button text-button text-primary hover:text-on-primary-fixed-variant transition-colors flex items-center gap-1">
+             Full View <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+           </Link>
+         </div>
 
         {myTasks.length === 0 ? (
           <div className="bg-surface-container-lowest border border-outline-variant rounded-xl p-xl text-center">

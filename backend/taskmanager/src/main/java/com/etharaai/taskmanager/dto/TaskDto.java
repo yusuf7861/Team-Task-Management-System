@@ -2,6 +2,7 @@ package com.etharaai.taskmanager.dto;
 
 import com.etharaai.taskmanager.entity.TaskStatus;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -21,6 +22,7 @@ public record TaskDto(
 
     TaskStatus status,
 
+    @FutureOrPresent(message = "Due date cannot be in the past")
     LocalDate dueDate,
 
     @NotNull(message = "Project ID is required")
